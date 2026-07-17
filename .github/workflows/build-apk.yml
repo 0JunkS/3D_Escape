@@ -39,23 +39,69 @@ jobs:
       - name: Grant Gradle execute permission
         run: chmod +x android/gradlew
 
-      - name: Build Debug APK
-        run: cd android && ./gradlew assembleDebug
+      - name: Generate or restore keystore
+        run: |
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "기존 키스토어 복원 중..."
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/release.keystore
+          else
+            echo "새 키스토어 생성 중..."
+            keytool -genkeypair \
+              -v \
+              -keystore android/app/release.keystore \
+              -alias "${{ secrets.KEY_ALIAS || 'SHA384withRSA' }}" \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+              -keypass "${{ secrets.KEYSTORE_PASSWORD }}" \
+              -dname "CN=Won Taein, OU=Won Taein, O=Won Taein, L=Seoul, ST=Seoul, C=KR"
+            echo ""
+            echo "============================================"
+            echo "⚠️  아래 값을 복사해서 GitHub Secret에 등록하세요"
+            echo "Secret 이름: KEYSTORE_BASE64"
+            echo "============================================"
+            base64 -w 0 android/app/release.keystore
+            echo ""
+            echo "============================================"
+          fi
 
-      - name: Build Debug AAB
-        run: cd android && ./gradlew bundleDebug
+      - name: Build Release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/android/app/release.keystore \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=SHA384withRSA \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEYSTORE_PASSWORD }}
+
+      - name: Build Release AAB
+        run: |
+          cd android
+          ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/android/app/release.keystore \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=SHA384withRSA \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEYSTORE_PASSWORD }}
+
+      - name: Upload keystore artifact (백업용)
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-keystore
+          path: android/app/release.keystore
+          retention-days: 90
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 3d-escape-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: 3d-escape-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 3d-escape-debug-aab
-          path: android/app/build/outputs/bundle/debug/app-debug.aab
+          name: 3d-escape-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -63,6 +109,6 @@ jobs:
           tag_name: v${{ github.run_number }}
           name: "3D Escape v${{ github.run_number }}"
           files: |
-            android/app/build/outputs/apk/debug/app-debug.apk
-            android/app/build/outputs/bundle/debug/app-debug.aab
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/bundle/release/app-release.aab
           generate_release_notes: false
