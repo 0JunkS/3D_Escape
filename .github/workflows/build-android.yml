@@ -57,8 +57,9 @@ jobs:
           cd /tmp/cap-install
           npm init -y
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
-          # Copy node_modules into the game package so cap CLI can find them
-          cp -r node_modules $GITHUB_WORKSPACE/artifacts/game/node_modules
+          # Merge into game's node_modules with rsync (trailing slash = contents)
+          mkdir -p $GITHUB_WORKSPACE/artifacts/game/node_modules
+          rsync -a node_modules/ $GITHUB_WORKSPACE/artifacts/game/node_modules/
 
       # ── 7. Add Android platform ────────────────────────────────────────────
       - name: Add Android platform
