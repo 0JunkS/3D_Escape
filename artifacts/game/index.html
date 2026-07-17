@@ -314,7 +314,8 @@ window._FB_CFG={
   projectId:"d-game-2919b",
   storageBucket:"d-game-2919b.firebasestorage.app",
   messagingSenderId:"441151597074",
-  appId:"1:441151597074:web:aa01dfca266775d58686cb"
+  appId:"1:441151597074:web:aa01dfca266775d58686cb",
+  measurementId:"G-0QJN573P8T"
 };
 </script>
 <style>
@@ -1424,6 +1425,43 @@ function selectArrow(id){
     const hb=document.getElementById('hint-bar');hb.style.opacity='1';setTimeout(()=>{hb.style.opacity='0';},2500);
   }
 }
+// ── COMBO SOUND SYSTEM ──────────────────────────────────────────────────────
+// C major pentatonic across octaves: C4→E4→G4→A4→C5→…→A6→C7, then reset
+const _COMBO_NOTES=[
+  261.63,329.63,392.00,440.00,   // C4 E4 G4 A4
+  523.25,659.25,783.99,880.00,   // C5 E5 G5 A5
+  1046.50,1318.51,1567.98,1760.00, // C6 E6 G6 A6
+  2093.00                         // C7
+];
+let _comboIdx=0;
+let _sfxCtx=null;
+function _getSfxCtx(){
+  if(!_sfxCtx)_sfxCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(_sfxCtx.state==='suspended')_sfxCtx.resume();
+  return _sfxCtx;
+}
+function playComboNote(){
+  try{
+    const ctx=_getSfxCtx();
+    const freq=_COMBO_NOTES[_comboIdx];
+    const now=ctx.currentTime;
+    // 메인 사인파 + 배음(2배)으로 청량한 마림바/벨 느낌
+    [[freq,0.28,0.008,0.32,'sine'],[freq*2,0.10,0.005,0.18,'sine'],[freq*4,0.04,0.003,0.10,'sine']].forEach(([f,vol,atk,dec,type])=>{
+      const osc=ctx.createOscillator(),gain=ctx.createGain();
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.type=type;osc.frequency.value=f;
+      gain.gain.setValueAtTime(0,now);
+      gain.gain.linearRampToValueAtTime(vol,now+atk);
+      gain.gain.exponentialRampToValueAtTime(0.0001,now+dec);
+      osc.start(now);osc.stop(now+dec+0.05);
+    });
+    _comboIdx++;
+    if(_comboIdx>=_COMBO_NOTES.length)_comboIdx=0; // C7 초과 시 C4로 리셋
+  }catch(e){}
+}
+function resetComboSound(){_comboIdx=0;}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function launchArrow(id){
   const e=arrowMap[id||selId];if(!e||e.state!=='idle')return;
   clearPreview();setGlow(e,false);
@@ -1431,10 +1469,12 @@ function launchArrow(id){
   selId=null;lastId=null;
   if(blocked(e)){
     e.state='returning';e.prog=0.22;
+    resetComboSound();
     if(phase==='playing'){lives--;shk=1.0;updateHUD();flashBlock();if(lives<=0)setTimeout(()=>endGame(false),700);}
     else if(phase==='multi-playing'){shk=0.6;flashBlock();multiBlockCount++;const pen=Math.min(2,multiBlockCount);popup('실수! 보상 -'+pen+' 코인',innerWidth/2,innerHeight*.38,'#ff6b6b');}
   }else{
     e.state='moving';e.prog=0;
+    playComboNote();
     if(phase==='multi-playing'){multiEscape();}
   }
 }
@@ -2599,7 +2639,7 @@ flightCanvas.addEventListener('pointerdown',e=>{if(phase!=='flight')return;fligh
 flightCanvas.addEventListener('pointermove',e=>{if(phase==='flight'&&flight.touching)flight.targetX=flightPointerX(e);});
 flightCanvas.addEventListener('pointerup',e=>{flight.touching=false;flightCanvas.releasePointerCapture?.(e.pointerId);});
 flightCanvas.addEventListener('pointercancel',()=>{flight.touching=false;});
-window.addEventListener('keydown',e=>{if(phase!=='flight')return;if(e.key==='ArrowLeft')flight.targetX=clamp(flight.targetX-48,38,flight.w-38);if(e.key==='ArrowRight')flight.targetX=clamp(flight.targetX+48,38,flight.w-38);});
+window.addEventListener('keydown',e=>{if(phase!=='flight')return;if(e.key==='ArrowLeft'){flight.targetX=clamp(flight.targetX-48,38,flight.w-38);playComboNote();}else if(e.key==='ArrowRight'){flight.targetX=clamp(flight.targetX+48,38,flight.w-38);playComboNote();}});
 loadFlightSave();
 // INPUT
 // ══════════════════════════════════════════════════
