@@ -343,6 +343,77 @@ window._FB_CFG={
 .btn-lo{background:rgba(255,100,100,0.12);border:1px solid rgba(255,100,100,0.3);color:#ff6b6b;padding:13px;border-radius:50px;font-size:14px;font-weight:700;cursor:pointer;width:100%}
 .btn-cam{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);padding:12px;border-radius:50px;font-size:14px;cursor:pointer;width:100%}
 </style>
+<style>
+/* ── NEW FEATURE PANELS ──────────────────────────────────────────────────────*/
+.nf-ov{position:fixed;inset:0;z-index:30;background:rgba(4,4,18,.98);display:none;flex-direction:column;overflow:hidden}
+.nf-ov.on{display:flex}
+.nf-hdr{display:flex;align-items:center;justify-content:space-between;padding:20px 18px 12px;flex-shrink:0}
+.nf-hdr h2{color:#fff;font-size:18px;font-weight:900}
+.nf-back{background:rgba(255,255,255,.1);border:none;color:#fff;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.nf-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 14px 40px}
+/* MENU EXTRA BUTTONS */
+.menu-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.menu-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}
+.btn-xs{padding:11px 8px;font-size:12px;font-weight:700}
+/* CHEST */
+.chest-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.chest-card{background:rgba(18,18,46,.85);border:2px solid rgba(70,70,170,.3);border-radius:16px;padding:16px 8px;text-align:center;cursor:pointer;transition:transform .12s,border-color .2s}
+.chest-card:active{transform:scale(.95)}
+.chest-card.bronze{border-color:rgba(205,127,50,.5)}.chest-card.silver{border-color:rgba(192,192,192,.5)}.chest-card.gold{border-color:rgba(255,215,0,.5)}
+.chest-ico{font-size:36px;margin-bottom:6px}.chest-name{color:#fff;font-size:12px;font-weight:700;margin-bottom:4px}.chest-cost{color:#FFD700;font-size:11px}
+#chest-open-ov{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;flex-direction:column}
+#chest-open-ov.show{display:flex}
+.co-chest{font-size:80px;animation:cshk .45s ease-in-out}.co-result{margin-top:20px;font-size:52px}.co-label{color:#fff;font-size:18px;font-weight:700;margin-top:8px}.co-rarity{font-size:12px;font-weight:700;letter-spacing:2px;margin-top:4px}
+.co-rarity.common{color:#aaa}.co-rarity.rare{color:#4cc9f0}.co-rarity.epic{color:#a855f7}.co-rarity.legendary{color:#FFD700}
+.co-btn{margin-top:24px;padding:13px 40px;border-radius:50px;border:none;color:#fff;font-size:15px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#4361ee,#4cc9f0)}
+@keyframes cshk{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+/* MISSIONS */
+.mission-item{background:rgba(18,18,46,.85);border:1px solid rgba(70,70,170,.3);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+.mission-title{color:#fff;font-size:14px;font-weight:700;margin-bottom:4px}
+.mission-prog-bar{height:6px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden;margin:8px 0 6px}
+.mission-prog-fill{height:100%;background:linear-gradient(90deg,#4361ee,#4cc9f0);border-radius:4px;transition:width .4s}
+.mission-meta{display:flex;justify-content:space-between;align-items:center}
+.mission-reward{color:#FFD700;font-size:12px;font-weight:700}.ms-done{color:#4ade80}.ms-prog{color:rgba(200,200,255,.6)}
+.mission-claim{background:linear-gradient(135deg,#4361ee,#4cc9f0);border:none;color:#fff;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;cursor:pointer}
+.mission-reset{color:rgba(150,150,200,.5);font-size:11px;text-align:center;margin-top:12px}
+/* ACHIEVEMENTS */
+.achieve-item{background:rgba(18,18,46,.85);border:1px solid rgba(70,70,170,.2);border-radius:14px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:14px}
+.achieve-item.unlocked{border-color:rgba(255,215,0,.4)}
+.achieve-ico{font-size:32px;min-width:42px;text-align:center}.achieve-info{flex:1}
+.achieve-name{color:#fff;font-size:13px;font-weight:700}.achieve-desc{color:rgba(150,150,200,.7);font-size:11px;margin-top:2px}
+.achieve-reward{color:#FFD700;font-size:11px;font-weight:700;margin-top:4px}.achieve-badge{font-size:18px;min-width:24px}
+/* SPECIAL STAGES */
+.special-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.special-card{background:rgba(18,18,46,.85);border:2px solid rgba(70,70,170,.3);border-radius:16px;padding:18px 12px;text-align:center;cursor:pointer;transition:transform .12s}
+.special-card:active{transform:scale(.96)}
+.special-ico{font-size:36px;margin-bottom:8px}.special-name{color:#fff;font-size:13px;font-weight:700;margin-bottom:4px}
+.special-desc{color:rgba(150,150,200,.7);font-size:10px;line-height:1.5}.special-reward{color:#FFD700;font-size:11px;font-weight:700;margin-top:6px}
+#special-timer{position:fixed;top:70px;left:50%;transform:translateX(-50%);color:#4cc9f0;font-weight:900;font-size:20px;letter-spacing:2px;pointer-events:none;z-index:50;display:none}
+/* DUNGEON */
+.dungeon-info{background:rgba(18,18,46,.85);border:2px solid rgba(120,80,220,.4);border-radius:16px;padding:20px;margin-bottom:16px;text-align:center}
+.dungeon-title{color:#fff;font-size:20px;font-weight:900;margin-bottom:6px}.dungeon-sub{color:rgba(150,150,200,.7);font-size:13px;line-height:1.6;margin-bottom:12px}
+.dungeon-rooms{display:flex;justify-content:center;gap:8px;margin:12px 0}
+.droom{width:32px;height:32px;border-radius:8px;border:2px solid rgba(120,80,220,.4);display:flex;align-items:center;justify-content:center;font-size:14px;background:rgba(30,20,60,.5)}
+.droom.done{background:rgba(76,201,240,.2);border-color:#4cc9f0}.droom.cur{background:rgba(120,80,220,.3);border-color:#a855f7;animation:dpulse 1s infinite}
+@keyframes dpulse{0%,100%{box-shadow:0 0 0 0 rgba(168,85,247,0)}50%{box-shadow:0 0 0 6px rgba(168,85,247,0)}}
+.dungeon-best{color:#FFD700;font-size:13px;margin-top:8px}
+/* INFINITE */
+.inf-info{background:rgba(18,18,46,.85);border:2px solid rgba(67,97,238,.4);border-radius:16px;padding:20px;margin-bottom:16px;text-align:center}
+.inf-score-row{display:flex;justify-content:space-around;margin:12px 0}
+.inf-score-val{color:#fff;font-size:22px;font-weight:900}.inf-score-lbl{color:rgba(150,150,200,.6);font-size:11px;margin-top:2px}
+/* TIER VIEW */
+.tier-current{text-align:center;padding:24px 16px;background:rgba(18,18,46,.85);border-radius:16px;margin-bottom:14px}
+.tier-emblem-big{font-size:56px;margin-bottom:8px}.tier-name-big{font-size:22px;font-weight:900;color:#fff;margin-bottom:4px}
+.tier-pts-lbl{color:rgba(150,150,200,.7);font-size:13px;margin-bottom:12px}
+.tier-bar-bg2{height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
+.tier-bar-fill2{height:100%;border-radius:4px;transition:width .5s}
+.tier-bar-lbl2{display:flex;justify-content:space-between;font-size:10px;color:rgba(150,150,200,.5);margin-top:4px}
+.tier-list{display:flex;flex-direction:column;gap:8px}
+.tier-row{background:rgba(18,18,46,.85);border:1px solid rgba(70,70,170,.2);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.tier-row.cur{border-color:rgba(255,215,0,.5)}.tier-row-sym{font-size:24px;min-width:32px;text-align:center}
+.tier-row-info{flex:1}.tier-row-name{color:#fff;font-size:13px;font-weight:700}.tier-row-pts{color:rgba(150,150,200,.6);font-size:11px}
+.tier-row-reward{color:#FFD700;font-size:11px;font-weight:700}.tier-row-badge{font-size:18px}
+</style>
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -440,6 +511,17 @@ window._FB_CFG={
       <button class="btn btn-secondary" id="btn-cont" style="display:none">↩ 이어하기</button>
       <button class="btn btn-multi" id="btn-multi">⚡ 멀티플레이</button>
       <button class="btn btn-shop" id="btn-shop">🛒 상점</button>
+      <div class="menu-grid2">
+        <button class="btn btn-xs" id="btn-chest" style="background:linear-gradient(135deg,#f77f00,#ffd700);box-shadow:0 0 14px rgba(255,215,0,.3)">🎁 보물 상자</button>
+        <button class="btn btn-xs" id="btn-mission" style="background:linear-gradient(135deg,#0077b6,#00b4d8);box-shadow:0 0 14px rgba(0,180,216,.3)">📅 일일 미션</button>
+        <button class="btn btn-xs" id="btn-achieve" style="background:linear-gradient(135deg,#b5860d,#f7c59f);box-shadow:0 0 14px rgba(212,160,23,.3)">🏆 업적</button>
+        <button class="btn btn-xs" id="btn-tier" style="background:linear-gradient(135deg,#5e60ce,#a855f7);box-shadow:0 0 14px rgba(168,85,247,.3)">🎖️ 내 티어</button>
+      </div>
+      <div class="menu-grid3">
+        <button class="btn btn-xs" id="btn-special" style="background:linear-gradient(135deg,#ef233c,#f72585)">⚡ 특수</button>
+        <button class="btn btn-xs" id="btn-dungeon" style="background:linear-gradient(135deg,#2d6a4f,#40916c)">🌍 던전</button>
+        <button class="btn btn-xs" id="btn-inf" style="background:linear-gradient(135deg,#023e8a,#0077b6)">♾️ 무한</button>
+      </div>
     </div>
   </div>
 
@@ -633,6 +715,97 @@ window._FB_CFG={
       <div class="mp-label op">상대</div>
       <div class="mp-bar-bg"><div class="mp-bar-fill op" id="mp-op-fill"></div></div>
       <div class="mp-count op" id="mp-op-count">0/0</div>
+    </div>
+  </div>
+
+  <!-- ══ CHEST PANEL ══ -->
+  <div class="nf-ov" id="chest-ov">
+    <div class="nf-hdr"><h2>🎁 보물 상자</h2><button class="nf-back" id="chest-back">✕</button></div>
+    <div class="nf-body">
+      <div style="color:rgba(150,150,200,.7);font-size:12px;text-align:center;margin-bottom:14px;line-height:1.6">상자를 열어 희귀한 보상을 획득하세요!<br>등급이 높을수록 더 큰 보상이 나옵니다.</div>
+      <div class="chest-grid" id="chest-grid"></div>
+      <div style="color:rgba(150,150,200,.5);font-size:11px;text-align:center;margin-top:20px;line-height:1.8">일반 · ✦ 희귀 · ✦✦ 에픽 · ✦✦✦ 전설</div>
+    </div>
+  </div>
+  <div id="chest-open-ov">
+    <div style="text-align:center">
+      <div class="co-chest" id="co-chest">📦</div>
+      <div class="co-result" id="co-result"></div>
+      <div class="co-label" id="co-label"></div>
+      <div class="co-rarity" id="co-rarity"></div>
+      <button class="co-btn" id="co-close">확인</button>
+    </div>
+  </div>
+
+  <!-- ══ MISSION PANEL ══ -->
+  <div class="nf-ov" id="mission-ov">
+    <div class="nf-hdr"><h2>📅 일일 미션</h2><button class="nf-back" id="mission-back">✕</button></div>
+    <div class="nf-body">
+      <div id="mission-list"></div>
+      <div class="mission-reset" id="mission-reset-txt"></div>
+    </div>
+  </div>
+
+  <!-- ══ ACHIEVEMENTS PANEL ══ -->
+  <div class="nf-ov" id="achieve-ov">
+    <div class="nf-hdr"><h2>🏆 업적</h2><button class="nf-back" id="achieve-back">✕</button></div>
+    <div class="nf-body">
+      <div style="color:rgba(150,150,200,.7);font-size:12px;text-align:center;margin-bottom:14px">달성 즉시 코인 지급</div>
+      <div id="achieve-list"></div>
+    </div>
+  </div>
+
+  <!-- ══ SPECIAL STAGES PANEL ══ -->
+  <div class="nf-ov" id="special-ov">
+    <div class="nf-hdr"><h2>⚡ 특수 스테이지</h2><button class="nf-back" id="special-back">✕</button></div>
+    <div class="nf-body">
+      <div style="color:rgba(150,150,200,.7);font-size:12px;text-align:center;margin-bottom:14px;line-height:1.6">특수 조건에서 도전하면 추가 보상!</div>
+      <div class="special-grid" id="special-grid"></div>
+    </div>
+  </div>
+  <div id="special-timer"></div>
+
+  <!-- ══ DUNGEON PANEL ══ -->
+  <div class="nf-ov" id="dungeon-ov">
+    <div class="nf-hdr"><h2>🌍 랜덤 던전</h2><button class="nf-back" id="dungeon-back">✕</button></div>
+    <div class="nf-body">
+      <div class="dungeon-info">
+        <div class="dungeon-title">랜덤 5룸 던전</div>
+        <div class="dungeon-sub">5개의 무작위 방을 연속 클리어하세요.<br>라이프는 방을 넘어 이어집니다.</div>
+        <div class="dungeon-rooms" id="dungeon-rooms"></div>
+        <div class="dungeon-best" id="dungeon-best">최고 기록: —</div>
+      </div>
+      <button class="btn btn-primary" id="dungeon-start" style="width:100%;margin-bottom:10px">🌍 던전 시작</button>
+      <div style="color:rgba(150,150,200,.6);font-size:12px;text-align:center;line-height:1.7">완주 보상: +500 💰 · 각 방 클리어 시 보상 누적</div>
+    </div>
+  </div>
+
+  <!-- ══ INFINITE MODE PANEL ══ -->
+  <div class="nf-ov" id="inf-ov">
+    <div class="nf-hdr"><h2>♾️ 무한 모드</h2><button class="nf-back" id="inf-back">✕</button></div>
+    <div class="nf-body">
+      <div class="inf-info">
+        <div style="font-size:32px;margin-bottom:8px">♾️</div>
+        <div style="color:#fff;font-size:16px;font-weight:700;margin-bottom:6px">무한 이스케이프</div>
+        <div style="color:rgba(150,150,200,.7);font-size:12px;line-height:1.6;margin-bottom:14px">레벨이 끝나면 자동으로 다음 레벨로.<br>실수를 최소화해 최고 기록을 노려보세요.</div>
+        <div class="inf-score-row">
+          <div><div class="inf-score-val" id="inf-cur-lv">—</div><div class="inf-score-lbl">현재 레벨</div></div>
+          <div><div class="inf-score-val" id="inf-best-lv">—</div><div class="inf-score-lbl">최고 레벨</div></div>
+          <div><div class="inf-score-val" id="inf-mistakes">—</div><div class="inf-score-lbl">총 실수</div></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="inf-start" style="width:100%;margin-bottom:10px">♾️ 시작</button>
+      <div style="color:rgba(150,150,200,.6);font-size:12px;text-align:center">레벨당 코인 보상 지급</div>
+    </div>
+  </div>
+
+  <!-- ══ TIER VIEW PANEL ══ -->
+  <div class="nf-ov" id="tier-ov">
+    <div class="nf-hdr"><h2>🎖️ 티어 확인</h2><button class="nf-back" id="tier-back">✕</button></div>
+    <div class="nf-body">
+      <div class="tier-current" id="tier-current-box"></div>
+      <div style="color:#fff;font-size:13px;font-weight:700;margin:12px 0 8px">전체 티어 & 보상</div>
+      <div class="tier-list" id="tier-list"></div>
     </div>
   </div>
 
@@ -1475,6 +1648,11 @@ function launchArrow(id){
   }else{
     e.state='moving';e.prog=0;
     playComboNote();
+    if(typeof achieveState!=='undefined'){
+      _achStat('totalArrows',1,true);
+      _achStat('maxCombo',_comboIdx,false,true);
+      _missionProg('arrows',1);
+    }
     if(phase==='multi-playing'){multiEscape();}
   }
 }
@@ -1620,6 +1798,46 @@ function updateCoins(){
 // ══════════════════════════════════════════════════
 function checkWin(){if(arrows.every(a=>a.state==='escaped'))endGame(true);}
 function endGame(won){
+  resetComboSound();
+  // ── 던전 모드 ─────────────────────────────────────
+  if(typeof dungeonState!=='undefined'&&dungeonState){
+    if(won){const r=reward(dungeonState.rooms[dungeonState.room],lives,maxLiv);dungeonOnWin(r);}
+    else{dungeonBest=Math.max(dungeonBest,dungeonState.room);saveDungeonBest();dungeonState=null;
+      popup('💀 던전 실패...',innerWidth/2,innerHeight*.4,'#ff6b6b');
+      phase='over';clearPreview();document.getElementById('exit-btn').style.display='none';showUI('over');}
+    return;
+  }
+  // ── 무한 모드 ─────────────────────────────────────
+  if(typeof infState!=='undefined'&&infState){
+    if(won){const r=reward(infState.level,lives,maxLiv);infOnWin(r);}
+    else{infState.mistakes++;popup('💥 실수! 계속...',innerWidth/2,innerHeight*.4,'#ff6b6b');
+      setTimeout(()=>loadInfLevel(),900);}
+    return;
+  }
+  // ── 특수 스테이지 ─────────────────────────────────
+  if(typeof specialMode!=='undefined'&&specialMode){
+    const sm=specialMode;specialMode=null;
+    const st=document.getElementById('special-timer');if(st)st.style.display='none';
+    if(won){
+      if(sm.noMiss&&lives<maxLiv){popup('💥 완벽 클리어 실패!',innerWidth/2,innerHeight*.4,'#ff6b6b');}
+      else{coins+=sm.reward;doSave();updateCoins();popup(`⚡ 특수 클리어! +${sm.reward}💰`,innerWidth/2,innerHeight*.35,'#4cc9f0');
+        _achStat('perfectClears',1,true);_missionProg('nomiss',1);}
+    }
+    // fall through to normal win/over UI
+  }
+  // ── 일반 모드: 통계 & 미션 ────────────────────────
+  if(won){
+    _achStat('totalClears',1,true);
+    _achStat('maxLevel',lvIdx+1,false,true);
+    if(lives>=maxLiv)_achStat('perfectClears',1,true);
+    const r0=reward(lvIdx,lives,maxLiv);
+    _achStat('totalCoinsEarned',r0,true);
+    saveAchievements();checkAchievements();
+    _missionProg('levels',1);
+    if(lives>=maxLiv)_missionProg('nomiss',1);
+    _missionProg('coinsEarned',r0);
+    checkTierReward();
+  }
   phase=won?'win':'over';clearPreview();
   document.getElementById('exit-btn').style.display='none';
   if(!won){showUI('over');return;}
@@ -2934,6 +3152,378 @@ showUI('menu');
 initDemo();
 loop();
 initAuth();
+
+// ══════════════════════════════════════════════════
+// ACHIEVEMENT SYSTEM
+// ══════════════════════════════════════════════════
+const ACHIEVE_DEFS=[
+  {id:'first',name:'첫 번째 탈출',desc:'레벨을 처음 클리어하세요',icon:'🎉',reward:100,check:s=>s.totalClears>=1},
+  {id:'lv10',name:'레벨 10 달성',desc:'10레벨까지 도달하세요',icon:'🔟',reward:200,check:s=>s.maxLevel>=10},
+  {id:'lv50',name:'레벨 50 달성',desc:'50레벨까지 도달하세요',icon:'5️⃣0️⃣',reward:500,check:s=>s.maxLevel>=50},
+  {id:'arrows100',name:'화살표 100개',desc:'총 100개의 화살표를 탈출시키세요',icon:'🚀',reward:150,check:s=>s.totalArrows>=100},
+  {id:'arrows500',name:'화살표 500개',desc:'총 500개 탈출',icon:'🌟',reward:400,check:s=>s.totalArrows>=500},
+  {id:'perfect5',name:'완벽한 클리어 5회',desc:'실수 없이 레벨 5번 클리어',icon:'⭐',reward:300,check:s=>s.perfectClears>=5},
+  {id:'combo20',name:'콤보 마스터',desc:'콤보 20을 달성하세요',icon:'🎵',reward:250,check:s=>s.maxCombo>=20},
+  {id:'coins1000',name:'코인 부자',desc:'누적 1000 코인 획득',icon:'💰',reward:200,check:s=>s.totalCoinsEarned>=1000},
+  {id:'dungeon1',name:'던전 탐험가',desc:'랜덤 던전을 완주하세요',icon:'🌍',reward:350,check:s=>s.dungeonWins>=1},
+  {id:'inf20',name:'무한 도전자',desc:'무한 모드 20레벨 달성',icon:'♾️',reward:400,check:s=>s.infBest>=20},
+];
+let achieveState={unlocked:{},stats:{totalClears:0,maxLevel:0,totalArrows:0,perfectClears:0,maxCombo:0,totalCoinsEarned:0,dungeonWins:0,infBest:0}};
+function loadAchievements(){try{const r=localStorage.getItem('e3_achieve');if(r){const d=JSON.parse(r);achieveState={unlocked:{},stats:{...achieveState.stats},...d};}}catch{}}
+function saveAchievements(){try{localStorage.setItem('e3_achieve',JSON.stringify(achieveState));}catch{}}
+function checkAchievements(){
+  ACHIEVE_DEFS.forEach(a=>{
+    if(!achieveState.unlocked[a.id]&&a.check(achieveState.stats)){
+      achieveState.unlocked[a.id]=true;coins+=a.reward;doSave();updateCoins();saveAchievements();
+      popup(`🏆 업적: ${a.name} +${a.reward}💰`,innerWidth/2,innerHeight*.35,'#FFD700');
+    }
+  });
+}
+// stat helpers used in endGame & launchArrow (typeof guard for before-init calls)
+function _achStat(key,val,add=false,useMax=false){
+  if(!achieveState)return;
+  if(useMax)achieveState.stats[key]=Math.max(achieveState.stats[key]||0,val);
+  else if(add)achieveState.stats[key]=(achieveState.stats[key]||0)+val;
+  else achieveState.stats[key]=val;
+}
+function renderAchievements(){
+  const list=document.getElementById('achieve-list');if(!list)return;
+  list.innerHTML=ACHIEVE_DEFS.map(a=>{
+    const done=achieveState.unlocked[a.id];
+    return `<div class="achieve-item${done?' unlocked':''}">
+      <div class="achieve-ico" style="opacity:${done?1:.35}">${a.icon}</div>
+      <div class="achieve-info">
+        <div class="achieve-name" style="opacity:${done?1:.6}">${a.name}</div>
+        <div class="achieve-desc">${a.desc}</div>
+        ${done?'':`<div class="achieve-reward">🎁 +${a.reward} 💰</div>`}
+      </div>
+      <div class="achieve-badge">${done?'✅':'🔒'}</div>
+    </div>`;
+  }).join('');
+}
+loadAchievements();
+
+// ══════════════════════════════════════════════════
+// DAILY MISSION SYSTEM
+// ══════════════════════════════════════════════════
+const MISSION_POOL=[
+  {id:'clear3',label:'레벨 3개 클리어',icon:'🎮',total:3,reward:80,key:'levels'},
+  {id:'escape15',label:'화살표 15개 탈출',icon:'🚀',total:15,reward:60,key:'arrows'},
+  {id:'nomiss',label:'실수 없이 레벨 클리어',icon:'🎯',total:1,reward:120,key:'nomiss'},
+  {id:'coins300',label:'코인 300개 획득',icon:'💰',total:300,reward:50,key:'coinsEarned'},
+  {id:'combo10',label:'콤보 10 달성',icon:'🎵',total:10,reward:100,key:'combo'},
+  {id:'multi1',label:'멀티플레이 1판',icon:'⚡',total:1,reward:90,key:'multi'},
+  {id:'dungeon1',label:'던전 방 1개 클리어',icon:'🌍',total:1,reward:70,key:'dungeon'},
+];
+let missionState={};
+function _todayKey(){const d=new Date();return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;}
+function _initDailyMissions(){
+  const shuffled=[...MISSION_POOL].sort(()=>Math.random()-.5).slice(0,3);
+  missionState={day:_todayKey(),missions:shuffled.map(m=>({...m,prog:0,claimed:false}))};
+  _saveMissions();
+}
+function _loadMissions(){
+  try{
+    const raw=localStorage.getItem('e3_missions');
+    if(!raw){_initDailyMissions();return;}
+    const data=JSON.parse(raw);
+    if(data.day!==_todayKey()){_initDailyMissions();}else{missionState=data;}
+  }catch{_initDailyMissions();}
+}
+function _saveMissions(){try{localStorage.setItem('e3_missions',JSON.stringify(missionState));}catch{}}
+function _missionProg(key,amount=1){
+  if(!missionState.missions)return;
+  let updated=false;
+  missionState.missions.forEach(m=>{if(m.key===key&&!m.claimed){m.prog=Math.min(m.total,(m.prog||0)+amount);updated=true;}});
+  if(updated)_saveMissions();
+}
+function renderMissions(){
+  const list=document.getElementById('mission-list');if(!list)return;
+  if(!missionState.missions){list.innerHTML='';return;}
+  list.innerHTML=missionState.missions.map((m,i)=>{
+    const pct=Math.min(100,Math.floor((m.prog||0)/m.total*100));
+    const done=(m.prog||0)>=m.total;
+    return `<div class="mission-item">
+      <div class="mission-title">${m.icon} ${m.label}</div>
+      <div class="mission-prog-bar"><div class="mission-prog-fill" style="width:${pct}%"></div></div>
+      <div class="mission-meta">
+        <div class="mission-reward">🎁 +${m.reward} 💰</div>
+        ${done&&!m.claimed?`<button class="mission-claim" onclick="window._claimMission(${i})">수령</button>`:m.claimed?'<span class="ms-done">✅ 수령 완료</span>':`<span class="ms-prog">${m.prog||0}/${m.total}</span>`}
+      </div></div>`;
+  }).join('');
+  const now=new Date(),midnight=new Date(now);midnight.setHours(24,0,0,0);
+  const diff=midnight-now,h=Math.floor(diff/3600000),mn=Math.floor((diff%3600000)/60000);
+  const rt=document.getElementById('mission-reset-txt');if(rt)rt.textContent=`리셋까지: ${h}시간 ${mn}분`;
+}
+window._claimMission=function(i){
+  const m=missionState.missions[i];if(!m||m.claimed||m.prog<m.total)return;
+  m.claimed=true;coins+=m.reward;doSave();updateCoins();_saveMissions();
+  popup(`+${m.reward} 💰 미션 보상!`,innerWidth/2,innerHeight*.4);renderMissions();
+};
+_loadMissions();
+
+// ══════════════════════════════════════════════════
+// CHEST SYSTEM
+// ══════════════════════════════════════════════════
+const CHESTS=[
+  {id:'bronze',name:'브론즈 상자',ico:'📦',cost:50,cls:'bronze',
+   table:[{w:50,icon:'💰',label:'30~70 코인',rarity:'common',min:30,max:70},{w:30,icon:'💰',label:'80~120 코인',rarity:'rare',min:80,max:120},{w:15,icon:'💎',label:'150~200 코인',rarity:'epic',min:150,max:200},{w:5,icon:'👑',label:'250~350 코인',rarity:'legendary',min:250,max:350}]},
+  {id:'silver',name:'실버 상자',ico:'🎁',cost:150,cls:'silver',
+   table:[{w:40,icon:'💰',label:'100~160 코인',rarity:'common',min:100,max:160},{w:35,icon:'💰',label:'180~260 코인',rarity:'rare',min:180,max:260},{w:18,icon:'💎',label:'300~420 코인',rarity:'epic',min:300,max:420},{w:7,icon:'👑',label:'500~700 코인',rarity:'legendary',min:500,max:700}]},
+  {id:'gold',name:'골드 상자',ico:'🏆',cost:400,cls:'gold',
+   table:[{w:30,icon:'💰',label:'250~350 코인',rarity:'common',min:250,max:350},{w:35,icon:'💎',label:'400~600 코인',rarity:'rare',min:400,max:600},{w:25,icon:'✨',label:'700~1000 코인',rarity:'epic',min:700,max:1000},{w:10,icon:'🌟',label:'1200~2000 코인',rarity:'legendary',min:1200,max:2000}]},
+];
+const RARITY_NAMES={common:'일반',rare:'✦ 희귀',epic:'✦✦ 에픽',legendary:'✦✦✦ 전설'};
+function renderChestGrid(){
+  const g=document.getElementById('chest-grid');if(!g)return;
+  g.innerHTML=CHESTS.map(c=>`<div class="chest-card ${c.cls}" onclick="window._openChest('${c.id}')">
+    <div class="chest-ico">${c.ico}</div><div class="chest-name">${c.name}</div>
+    <div class="chest-cost">💰 ${c.cost}</div></div>`).join('');
+}
+window._openChest=function(id){
+  const c=CHESTS.find(x=>x.id===id);if(!c)return;
+  if(coins<c.cost){popup('코인이 부족합니다!',innerWidth/2,innerHeight*.4,'#ff6b6b');return;}
+  coins-=c.cost;
+  let r=Math.random()*c.table.reduce((a,x)=>a+x.w,0),item=c.table[c.table.length-1];
+  for(const t of c.table){r-=t.w;if(r<=0){item=t;break;}}
+  const amount=item.min+Math.floor(Math.random()*(item.max-item.min+1));
+  coins+=amount;doSave();updateCoins();
+  const ov=document.getElementById('chest-open-ov');
+  document.getElementById('co-chest').textContent=c.ico;
+  document.getElementById('co-result').textContent=item.icon;
+  document.getElementById('co-label').textContent=`+${amount} 💰 코인`;
+  const rel=document.getElementById('co-rarity');rel.textContent=RARITY_NAMES[item.rarity]||'';rel.className='co-rarity '+item.rarity;
+  ov.classList.add('show');
+  _achStat('totalCoinsEarned',amount,true);checkAchievements();
+};
+document.getElementById('co-close').addEventListener('click',()=>document.getElementById('chest-open-ov').classList.remove('show'));
+
+// ══════════════════════════════════════════════════
+// SPECIAL STAGES
+// ══════════════════════════════════════════════════
+const SPECIAL_STAGES=[
+  {id:'timeatk',name:'⚡ 타임어택',icon:'⏱️',desc:'30초 안에 모든 화살표를 탈출!',reward:200,timeLimit:30},
+  {id:'nomiss',name:'🎯 퍼펙트',icon:'🎯',desc:'실수 없이 클리어하면 보상!',reward:250,noMiss:true},
+  {id:'blind',name:'🌑 블라인드',icon:'🌑',desc:'막힌 화살표 표시 없이 도전!',reward:300,blind:true},
+  {id:'speed',name:'🔥 스피드',icon:'🔥',desc:'더 빠른 화살표로 도전!',reward:220,speed:true},
+];
+let specialMode=null,specialTimer=0,specialRunning=false;
+function renderSpecialGrid(){
+  const g=document.getElementById('special-grid');if(!g)return;
+  g.innerHTML=SPECIAL_STAGES.map(s=>`<div class="special-card" onclick="window._startSpecial('${s.id}')">
+    <div class="special-ico">${s.icon}</div><div class="special-name">${s.name}</div>
+    <div class="special-desc">${s.desc}</div><div class="special-reward">+${s.reward} 💰 성공 시</div></div>`).join('');
+}
+window._startSpecial=function(id){
+  const s=SPECIAL_STAGES.find(x=>x.id===id);if(!s)return;
+  specialMode=s;specialTimer=s.timeLimit||0;specialRunning=true;
+  document.getElementById('special-ov').classList.remove('on');
+  const lvl=Math.max(0,Math.min(progress||0,49));
+  lvIdx=lvl;lives=5;maxLiv=5;escaped=0;phase='playing';
+  selId=null;lastId=null;controls.autoRotate=false;
+  spawnArrows(getLevel(lvl),activeSkin);
+  const cen=new THREE.Vector3();arrows.forEach(a=>cen.add(a.bp));cen.divideScalar(arrows.length);
+  camera.position.set(cen.x,cen.y+(innerHeight>innerWidth*1.1?2:1.5),cen.z+(innerHeight>innerWidth*1.1?5.5:4.5));
+  controls.target.copy(cen);controls.update();
+  document.getElementById('menu').classList.add('hidden');
+  document.getElementById('hud').style.display='block';document.getElementById('hud').style.opacity='1';
+  document.getElementById('exit-btn').style.display='block';document.getElementById('pbar').style.display='none';
+  const st=document.getElementById('special-timer');
+  if(st){st.style.display=s.timeLimit?'block':'none';st.textContent=s.timeLimit?`⏱️ ${s.timeLimit}초`:'⚡ 특수 스테이지';}
+  startOpening();
+};
+// Tick special timer — hooked into main loop below
+const _origLoop=loop;
+(function patchLoop(){
+  const clk2=new THREE.Clock();
+  const _origRaf=requestAnimationFrame;
+  // We'll tick specialMode inside the existing render loop by patching tickArrow timing
+})();
+// simpler: use setInterval for special timer
+let _specialInterval=null;
+function _startSpecialInterval(){
+  clearInterval(_specialInterval);
+  if(!specialMode||!specialMode.timeLimit)return;
+  _specialInterval=setInterval(()=>{
+    if(!specialMode||!specialMode.timeLimit||phase!=='playing'){clearInterval(_specialInterval);return;}
+    specialTimer=Math.max(0,specialTimer-0.25);
+    const st=document.getElementById('special-timer');if(st)st.textContent=`⏱️ ${Math.ceil(specialTimer)}초`;
+    if(specialTimer<=0){clearInterval(_specialInterval);endGame(false);}
+  },250);
+}
+window._startSpecial=function(id){
+  const s=SPECIAL_STAGES.find(x=>x.id===id);if(!s)return;
+  specialMode=s;specialTimer=s.timeLimit||0;
+  document.getElementById('special-ov').classList.remove('on');
+  const lvl=Math.max(0,Math.min(progress||0,49));
+  lvIdx=lvl;lives=5;maxLiv=5;escaped=0;phase='playing';
+  selId=null;lastId=null;controls.autoRotate=false;
+  spawnArrows(getLevel(lvl),activeSkin);
+  const cen=new THREE.Vector3();arrows.forEach(a=>cen.add(a.bp));cen.divideScalar(arrows.length);
+  camera.position.set(cen.x,cen.y+(innerHeight>innerWidth*1.1?2:1.5),cen.z+(innerHeight>innerWidth*1.1?5.5:4.5));
+  controls.target.copy(cen);controls.update();
+  document.getElementById('menu').classList.add('hidden');
+  document.getElementById('hud').style.display='block';document.getElementById('hud').style.opacity='1';
+  document.getElementById('exit-btn').style.display='block';document.getElementById('pbar').style.display='none';
+  const st=document.getElementById('special-timer');
+  if(st){st.style.display=s.timeLimit?'block':'none';if(s.timeLimit)st.textContent=`⏱️ ${s.timeLimit}초`;}
+  if(s.timeLimit)_startSpecialInterval();
+  startOpening();
+};
+
+// ══════════════════════════════════════════════════
+// DUNGEON MODE
+// ══════════════════════════════════════════════════
+let dungeonState=null,dungeonBest=0;
+function saveDungeonBest(){try{localStorage.setItem('e3_dungeon_best',String(dungeonBest));}catch{}}
+function _loadDungeonBest(){try{dungeonBest=parseInt(localStorage.getItem('e3_dungeon_best')||'0')||0;}catch{}}
+function _renderDungeonPanel(){
+  const r=document.getElementById('dungeon-rooms');
+  if(r)r.innerHTML=Array.from({length:5},(_,i)=>{
+    const st=dungeonState;
+    const cls=st?(i<st.room?'done':i===st.room?'cur':''):'';
+    const txt=st&&i<st.room?'✓':String(i+1);
+    return `<div class="droom ${cls}">${txt}</div>`;
+  }).join('');
+  const b=document.getElementById('dungeon-best');
+  if(b)b.textContent=dungeonBest>0?`최고 기록: ${dungeonBest}룸 완료`:'최고 기록: —';
+}
+function _loadDungeonLevel(){
+  if(!dungeonState)return;
+  const li=dungeonState.rooms[dungeonState.room];
+  lvIdx=li;lives=dungeonState.lives;maxLiv=5;escaped=0;phase='playing';
+  selId=null;lastId=null;controls.autoRotate=false;
+  spawnArrows(getLevel(li),activeSkin);
+  const cen=new THREE.Vector3();arrows.forEach(a=>cen.add(a.bp));cen.divideScalar(arrows.length);
+  camera.position.set(cen.x,cen.y+(innerHeight>innerWidth*1.1?2:1.5),cen.z+(innerHeight>innerWidth*1.1?5.5:4.5));
+  controls.target.copy(cen);controls.update();
+  document.getElementById('menu').classList.add('hidden');
+  document.getElementById('hud').style.display='block';document.getElementById('hud').style.opacity='1';
+  document.getElementById('exit-btn').style.display='block';document.getElementById('pbar').style.display='none';
+  const lt=document.getElementById('level-txt');if(lt)lt.textContent=`🌍 던전 ${dungeonState.room+1}/5`;
+  updateHUD();startOpening();
+}
+function dungeonOnWin(r){
+  dungeonState.coinsEarned=(dungeonState.coinsEarned||0)+r;dungeonState.lives=lives;dungeonState.room++;
+  _missionProg('dungeon',1);
+  if(dungeonState.room>=5){
+    const total=(dungeonState.coinsEarned||0)+500;coins+=total;doSave();updateCoins();
+    dungeonBest=Math.max(dungeonBest,5);saveDungeonBest();
+    _achStat('dungeonWins',1,true);saveAchievements();checkAchievements();
+    dungeonState=null;popup(`🌍 던전 완주! +${total}💰`,innerWidth/2,innerHeight*.35,'#40916c');
+    setTimeout(()=>goMenu(),2000);
+  }else{
+    dungeonBest=Math.max(dungeonBest,dungeonState.room);saveDungeonBest();
+    popup(`방 ${dungeonState.room}/5 클리어! +${r}💰`,innerWidth/2,innerHeight*.4,'#4cc9f0');
+    setTimeout(()=>_loadDungeonLevel(),1200);
+  }
+}
+document.getElementById('dungeon-start').addEventListener('click',()=>{
+  document.getElementById('dungeon-ov').classList.remove('on');
+  dungeonState={rooms:Array.from({length:5},()=>Math.floor(Math.random()*40)),room:0,lives:5,coinsEarned:0};
+  _renderDungeonPanel();_loadDungeonLevel();
+});
+_loadDungeonBest();
+
+// ══════════════════════════════════════════════════
+// INFINITE MODE
+// ══════════════════════════════════════════════════
+let infState=null,infBest=0;
+function saveInfBest(){try{localStorage.setItem('e3_inf_best',String(infBest));}catch{}}
+function _loadInfBest(){try{infBest=parseInt(localStorage.getItem('e3_inf_best')||'0')||0;}catch{}}
+function _renderInfPanel(){
+  const cl=document.getElementById('inf-cur-lv'),bl=document.getElementById('inf-best-lv'),mk=document.getElementById('inf-mistakes');
+  if(cl)cl.textContent=infState?String(infState.level+1):'—';
+  if(bl)bl.textContent=infBest?String(infBest):'—';
+  if(mk)mk.textContent=infState?String(infState.mistakes):'—';
+}
+function loadInfLevel(){
+  if(!infState)return;
+  const lvl=infState.level%999;
+  lvIdx=lvl;lives=5;maxLiv=5;escaped=0;phase='playing';
+  selId=null;lastId=null;controls.autoRotate=false;
+  spawnArrows(getLevel(lvl),activeSkin);
+  const cen=new THREE.Vector3();arrows.forEach(a=>cen.add(a.bp));cen.divideScalar(arrows.length);
+  camera.position.set(cen.x,cen.y+(innerHeight>innerWidth*1.1?2:1.5),cen.z+(innerHeight>innerWidth*1.1?5.5:4.5));
+  controls.target.copy(cen);controls.update();
+  document.getElementById('menu').classList.add('hidden');
+  document.getElementById('hud').style.display='block';document.getElementById('hud').style.opacity='1';
+  document.getElementById('exit-btn').style.display='block';document.getElementById('pbar').style.display='none';
+  const lt=document.getElementById('level-txt');if(lt)lt.textContent=`♾️ 레벨 ${infState.level+1}`;
+  updateHUD();startOpening();
+}
+function infOnWin(r){
+  coins+=r;doSave();updateCoins();infState.level++;
+  infBest=Math.max(infBest,infState.level);saveInfBest();
+  _achStat('infBest',infState.level,false,true);saveAchievements();checkAchievements();
+  popup(`+${r}💰 레벨 ${infState.level}!`,innerWidth/2,innerHeight*.4);
+  setTimeout(()=>loadInfLevel(),900);
+}
+document.getElementById('inf-start').addEventListener('click',()=>{
+  document.getElementById('inf-ov').classList.remove('on');
+  infState={level:0,mistakes:0};_renderInfPanel();loadInfLevel();
+});
+_loadInfBest();
+
+// ══════════════════════════════════════════════════
+// TIER REWARDS & VIEW
+// ══════════════════════════════════════════════════
+const TIER_REWARDS_MAP={iron:30,bronze:80,silver:150,gold:250,platinum:400,diamond:600,crossis:1000};
+let claimedTierRewards={};
+function _loadTierRewards(){try{claimedTierRewards=JSON.parse(localStorage.getItem('e3_tier_rwds')||'{}');}catch{}}
+function _saveTierRewards(){try{localStorage.setItem('e3_tier_rwds',JSON.stringify(claimedTierRewards));}catch{}}
+function checkTierReward(){
+  const tier=getRankTier();
+  if(claimedTierRewards[tier.id])return;
+  claimedTierRewards[tier.id]=true;_saveTierRewards();
+  const r=TIER_REWARDS_MAP[tier.id]||0;
+  if(r>0){coins+=r;doSave();updateCoins();popup(`🎖️ ${tier.name} 달성! +${r}💰`,innerWidth/2,innerHeight*.35,'#FFD700');}
+}
+function renderTierView(){
+  const box=document.getElementById('tier-current-box'),list=document.getElementById('tier-list');if(!box||!list)return;
+  const tier=getRankTier(),next=getNextRankTier();
+  const pct=next?Math.max(4,Math.min(100,(rankState.points-tier.min)/(next.min-tier.min)*100)):100;
+  box.innerHTML=`
+    <div class="tier-emblem-big">${tier.symbol}</div>
+    <div class="tier-name-big" style="color:${tier.color}">${tier.name}</div>
+    <div class="tier-pts-lbl">${rankState.placed?rankState.points+'점 · '+rankState.matches+'판':rankState.placements?`배치 ${rankState.placements}/5`:'배치고사 미완료'}</div>
+    <div class="tier-bar-bg2"><div class="tier-bar-fill2" style="width:${pct}%;background:linear-gradient(90deg,${tier.color},#fff)"></div></div>
+    <div class="tier-bar-lbl2"><span>${tier.name}</span><span>${next?next.name:'최고 티어'}</span></div>`;
+  list.innerHTML=RANK_TIERS.map(t=>{
+    const isCur=t.id===tier.id,done=rankState.placed&&rankState.points>=t.min;
+    return `<div class="tier-row${isCur?' cur':''}">
+      <div class="tier-row-sym">${t.symbol}</div>
+      <div class="tier-row-info">
+        <div class="tier-row-name" style="color:${isCur?t.color:'#fff'}">${t.name}</div>
+        <div class="tier-row-pts">${t.min}점 이상</div>
+        <div class="tier-row-reward">🎁 달성 보상: +${TIER_REWARDS_MAP[t.id]||0}💰</div>
+      </div>
+      <div class="tier-row-badge">${done?'✅':isCur?'🎯':'🔒'}</div>
+    </div>`;
+  }).join('');
+}
+_loadTierRewards();
+
+// ══════════════════════════════════════════════════
+// PANEL WIRING
+// ══════════════════════════════════════════════════
+const _panels={chest:'chest-ov',mission:'mission-ov',achieve:'achieve-ov',special:'special-ov',dungeon:'dungeon-ov',inf:'inf-ov',tier:'tier-ov'};
+function _openPanel(id){document.getElementById(id).classList.add('on');}
+function _closePanel(id){document.getElementById(id).classList.remove('on');}
+document.getElementById('btn-chest').addEventListener('click',()=>{renderChestGrid();_openPanel('chest-ov');});
+document.getElementById('chest-back').addEventListener('click',()=>_closePanel('chest-ov'));
+document.getElementById('btn-mission').addEventListener('click',()=>{_loadMissions();renderMissions();_openPanel('mission-ov');});
+document.getElementById('mission-back').addEventListener('click',()=>_closePanel('mission-ov'));
+document.getElementById('btn-achieve').addEventListener('click',()=>{renderAchievements();_openPanel('achieve-ov');});
+document.getElementById('achieve-back').addEventListener('click',()=>_closePanel('achieve-ov'));
+document.getElementById('btn-special').addEventListener('click',()=>{renderSpecialGrid();_openPanel('special-ov');});
+document.getElementById('special-back').addEventListener('click',()=>_closePanel('special-ov'));
+document.getElementById('btn-dungeon').addEventListener('click',()=>{_loadDungeonBest();_renderDungeonPanel();_openPanel('dungeon-ov');});
+document.getElementById('dungeon-back').addEventListener('click',()=>_closePanel('dungeon-ov'));
+document.getElementById('btn-inf').addEventListener('click',()=>{_loadInfBest();_renderInfPanel();_openPanel('inf-ov');});
+document.getElementById('inf-back').addEventListener('click',()=>_closePanel('inf-ov'));
+document.getElementById('btn-tier').addEventListener('click',()=>{renderTierView();_openPanel('tier-ov');});
+document.getElementById('tier-back').addEventListener('click',()=>_closePanel('tier-ov'));
 </script>
 </body>
 </html>
