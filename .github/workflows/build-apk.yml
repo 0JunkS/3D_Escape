@@ -39,39 +39,23 @@ jobs:
       - name: Grant Gradle execute permission
         run: chmod +x android/gradlew
 
-      - name: Decode Keystore
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/release.keystore
+      - name: Build Debug APK
+        run: cd android && ./gradlew assembleDebug
 
-      - name: Build Release APK
-        run: |
-          cd android
-          ./gradlew assembleRelease \
-            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/android/app/release.keystore \
-            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
-            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
-            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
-
-      - name: Build Release AAB
-        run: |
-          cd android
-          ./gradlew bundleRelease \
-            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/android/app/release.keystore \
-            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
-            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
-            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+      - name: Build Debug AAB
+        run: cd android && ./gradlew bundleDebug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 3d-escape-release-apk
-          path: android/app/build/outputs/apk/release/app-release.apk
+          name: 3d-escape-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 3d-escape-release-aab
-          path: android/app/build/outputs/bundle/release/app-release.aab
+          name: 3d-escape-debug-aab
+          path: android/app/build/outputs/bundle/debug/app-debug.aab
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -79,6 +63,6 @@ jobs:
           tag_name: v${{ github.run_number }}
           name: "3D Escape v${{ github.run_number }}"
           files: |
-            android/app/build/outputs/apk/release/app-release.apk
-            android/app/build/outputs/bundle/release/app-release.aab
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/bundle/debug/app-debug.aab
           generate_release_notes: false
