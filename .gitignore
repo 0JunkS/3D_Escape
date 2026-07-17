@@ -47,3 +47,6 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Android release keystore — NEVER commit this file
+release.keystore
