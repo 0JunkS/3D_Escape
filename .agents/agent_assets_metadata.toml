@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "wh4jfD9_989Q0M3rz41lK"
+uri = "file://artifacts/3d-escape-game/index.html"
+type = "unspecified"
+title = "3D Escape Game"
