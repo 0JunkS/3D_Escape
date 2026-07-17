@@ -50,24 +50,25 @@ jobs:
           mkdir -p artifacts/game/dist/public
           cp artifacts/game/index.html artifacts/game/dist/public/index.html
 
-      # ── 6. Install Capacitor locally in the game package ──────────────────
+      # ── 6. Install Capacitor in a temp dir (avoids pnpm catalog: protocol) ──
       - name: Install Capacitor
-        working-directory: artifacts/game
         run: |
-          npm install --no-save \
-            @capacitor/core@6 \
-            @capacitor/cli@6 \
-            @capacitor/android@6
+          mkdir -p /tmp/cap-install
+          cd /tmp/cap-install
+          npm init -y
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
+          # Copy node_modules into the game package so cap CLI can find them
+          cp -r node_modules $GITHUB_WORKSPACE/artifacts/game/node_modules
 
       # ── 7. Add Android platform ────────────────────────────────────────────
       - name: Add Android platform
         working-directory: artifacts/game
-        run: npx cap add android
+        run: ./node_modules/.bin/cap add android
 
       # ── 8. Sync web content into Android project ───────────────────────────
       - name: Sync Capacitor
         working-directory: artifacts/game
-        run: npx cap sync android
+        run: ./node_modules/.bin/cap sync android
 
       # ── 9a. Build DEBUG APK ────────────────────────────────────────────────
       - name: Build Debug APK
