@@ -328,7 +328,7 @@ window._FB_CFG={
 .btn-gst{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.65);padding:13px 28px;border-radius:50px;font-size:14px;font-weight:600;cursor:pointer;width:100%;max-width:300px;text-align:center;transition:transform .12s}
 .btn-gst:active{transform:scale(0.96)}
 #auth-loading{color:rgba(76,201,240,0.7);font-size:13px;display:none;letter-spacing:1px}
-#user-pill{position:absolute;top:14px;left:14px;background:rgba(10,10,35,0.85);border:1px solid rgba(255,255,255,0.14);border-radius:50px;padding:6px 14px 6px 8px;display:none;align-items:center;gap:8px;pointer-events:all;cursor:pointer;backdrop-filter:blur(10px);z-index:200}
+#user-pill{position:absolute;bottom:20px;left:14px;background:rgba(10,10,35,0.85);border:1px solid rgba(255,255,255,0.14);border-radius:50px;padding:6px 14px 6px 8px;display:none;align-items:center;gap:8px;pointer-events:all;cursor:pointer;backdrop-filter:blur(10px);z-index:200}
 #user-pill img{width:26px;height:26px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#4361ee,#4cc9f0)}
 #user-pill .up-col{display:flex;flex-direction:column;gap:1px}
 #user-pill .up-name{color:#fff;font-size:12px;font-weight:700;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -511,17 +511,7 @@ window._FB_CFG={
       <button class="btn btn-secondary" id="btn-cont" style="display:none">↩ 이어하기</button>
       <button class="btn btn-multi" id="btn-multi">⚡ 멀티플레이</button>
       <button class="btn btn-shop" id="btn-shop">🛒 상점</button>
-      <div class="menu-grid2">
-        <button class="btn btn-xs" id="btn-chest" style="background:linear-gradient(135deg,#f77f00,#ffd700);box-shadow:0 0 14px rgba(255,215,0,.3)">🎁 보물 상자</button>
-        <button class="btn btn-xs" id="btn-mission" style="background:linear-gradient(135deg,#0077b6,#00b4d8);box-shadow:0 0 14px rgba(0,180,216,.3)">📅 일일 미션</button>
-        <button class="btn btn-xs" id="btn-achieve" style="background:linear-gradient(135deg,#b5860d,#f7c59f);box-shadow:0 0 14px rgba(212,160,23,.3)">🏆 업적</button>
-        <button class="btn btn-xs" id="btn-tier" style="background:linear-gradient(135deg,#5e60ce,#a855f7);box-shadow:0 0 14px rgba(168,85,247,.3)">🎖️ 내 티어</button>
-      </div>
-      <div class="menu-grid3">
-        <button class="btn btn-xs" id="btn-special" style="background:linear-gradient(135deg,#ef233c,#f72585)">⚡ 특수</button>
-        <button class="btn btn-xs" id="btn-dungeon" style="background:linear-gradient(135deg,#2d6a4f,#40916c)">🌍 던전</button>
-        <button class="btn btn-xs" id="btn-inf" style="background:linear-gradient(135deg,#023e8a,#0077b6)">♾️ 무한</button>
-      </div>
+      <button class="btn btn-xs" id="btn-modes" style="background:linear-gradient(135deg,#1a1a4e,#2d2d80);border:1px solid rgba(100,100,255,.35);font-size:14px;padding:13px">🎮 게임 모드 &amp; 컨텐츠</button>
     </div>
   </div>
 
@@ -715,6 +705,47 @@ window._FB_CFG={
       <div class="mp-label op">상대</div>
       <div class="mp-bar-bg"><div class="mp-bar-fill op" id="mp-op-fill"></div></div>
       <div class="mp-count op" id="mp-op-count">0/0</div>
+    </div>
+  </div>
+
+  <!-- ══ MODES HUB PANEL ══ -->
+  <div class="nf-ov" id="modes-ov">
+    <div class="nf-hdr"><h2>🎮 게임 모드 &amp; 컨텐츠</h2><button class="nf-back" id="modes-back">✕</button></div>
+    <div class="nf-body">
+      <div style="color:rgba(150,150,200,.6);font-size:11px;letter-spacing:1px;font-weight:700;margin-bottom:10px">── 게임 모드 ──</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px">
+        <div class="special-card" id="mh-special" style="cursor:pointer">
+          <div class="special-ico">⚡</div><div class="special-name">특수 스테이지</div>
+          <div class="special-desc">특수 조건 도전</div>
+        </div>
+        <div class="special-card" id="mh-dungeon" style="cursor:pointer;border-color:rgba(64,145,108,.4)">
+          <div class="special-ico">🌍</div><div class="special-name">랜덤 던전</div>
+          <div class="special-desc">5룸 연속 클리어</div>
+        </div>
+        <div class="special-card" id="mh-inf" style="cursor:pointer;border-color:rgba(0,119,182,.4)">
+          <div class="special-ico">♾️</div><div class="special-name">무한 모드</div>
+          <div class="special-desc">끝없는 도전</div>
+        </div>
+      </div>
+      <div style="color:rgba(150,150,200,.6);font-size:11px;letter-spacing:1px;font-weight:700;margin-bottom:10px">── 컨텐츠 ──</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="special-card" id="mh-chest" style="cursor:pointer;border-color:rgba(255,215,0,.35)">
+          <div class="special-ico">🎁</div><div class="special-name">보물 상자</div>
+          <div class="special-desc">희귀 보상 획득</div>
+        </div>
+        <div class="special-card" id="mh-mission" style="cursor:pointer;border-color:rgba(0,180,216,.35)">
+          <div class="special-ico">📅</div><div class="special-name">일일 미션</div>
+          <div class="special-desc">매일 리셋</div>
+        </div>
+        <div class="special-card" id="mh-achieve" style="cursor:pointer;border-color:rgba(212,160,23,.35)">
+          <div class="special-ico">🏆</div><div class="special-name">업적</div>
+          <div class="special-desc">영구 달성 보상</div>
+        </div>
+        <div class="special-card" id="mh-tier" style="cursor:pointer;border-color:rgba(168,85,247,.35)">
+          <div class="special-ico">🎖️</div><div class="special-name">내 티어</div>
+          <div class="special-desc">랭크 & 보상 확인</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1748,11 +1779,15 @@ function showUI(which){
   document.getElementById('multi-lobby-card').style.display='none';
   document.getElementById('game-select').classList.remove('on');
   document.getElementById('flight-game').classList.remove('on');
+  // Always hide user-pill; show only on menu if logged in
+  const upill=document.getElementById('user-pill');
+  if(upill)upill.style.display='none';
   if(which==='hub'){
     document.getElementById('game-select').classList.add('on');
   }else if(which==='menu'){
     document.getElementById('menu').classList.remove('hidden');
     document.getElementById('coin-pill').style.display='flex';
+    if(upill&&upill.dataset.loggedIn==='1')upill.style.display='flex';
   }else if(which==='hud'){
     document.getElementById('hud').style.display='block';
     document.getElementById('exit-btn').style.display='flex';
@@ -3049,13 +3084,18 @@ function _setUserPill(user){
     nm.textContent=user.displayName||user.email||'사용자';
     badge.textContent='☁️ 클라우드 저장 중';
     badge.style.color='rgba(76,201,240,0.85)';
+    pill.dataset.loggedIn='1';
   }else{
     av.src='';
     nm.textContent='게스트';
     badge.textContent='☁️ 저장 없음';
     badge.style.color='rgba(170,170,220,0.55)';
+    pill.dataset.loggedIn='0';
   }
-  pill.style.display='flex';
+  // Only show pill on menu screen; showUI handles visibility elsewhere
+  if(document.getElementById('menu')&&!document.getElementById('menu').classList.contains('hidden')){
+    pill.style.display='flex';
+  }
 }
 
 function _hideAuthOv(){
@@ -3510,20 +3550,25 @@ _loadTierRewards();
 const _panels={chest:'chest-ov',mission:'mission-ov',achieve:'achieve-ov',special:'special-ov',dungeon:'dungeon-ov',inf:'inf-ov',tier:'tier-ov'};
 function _openPanel(id){document.getElementById(id).classList.add('on');}
 function _closePanel(id){document.getElementById(id).classList.remove('on');}
-document.getElementById('btn-chest').addEventListener('click',()=>{renderChestGrid();_openPanel('chest-ov');});
-document.getElementById('chest-back').addEventListener('click',()=>_closePanel('chest-ov'));
-document.getElementById('btn-mission').addEventListener('click',()=>{_loadMissions();renderMissions();_openPanel('mission-ov');});
-document.getElementById('mission-back').addEventListener('click',()=>_closePanel('mission-ov'));
-document.getElementById('btn-achieve').addEventListener('click',()=>{renderAchievements();_openPanel('achieve-ov');});
-document.getElementById('achieve-back').addEventListener('click',()=>_closePanel('achieve-ov'));
-document.getElementById('btn-special').addEventListener('click',()=>{renderSpecialGrid();_openPanel('special-ov');});
+// Modes hub button
+document.getElementById('btn-modes').addEventListener('click',()=>_openPanel('modes-ov'));
+document.getElementById('modes-back').addEventListener('click',()=>_closePanel('modes-ov'));
+// Hub → sub-panel navigation
+document.getElementById('mh-special').addEventListener('click',()=>{_closePanel('modes-ov');renderSpecialGrid();_openPanel('special-ov');});
+document.getElementById('mh-dungeon').addEventListener('click',()=>{_closePanel('modes-ov');_loadDungeonBest();_renderDungeonPanel();_openPanel('dungeon-ov');});
+document.getElementById('mh-inf').addEventListener('click',()=>{_closePanel('modes-ov');_loadInfBest();_renderInfPanel();_openPanel('inf-ov');});
+document.getElementById('mh-chest').addEventListener('click',()=>{_closePanel('modes-ov');renderChestGrid();_openPanel('chest-ov');});
+document.getElementById('mh-mission').addEventListener('click',()=>{_closePanel('modes-ov');_loadMissions();renderMissions();_openPanel('mission-ov');});
+document.getElementById('mh-achieve').addEventListener('click',()=>{_closePanel('modes-ov');renderAchievements();_openPanel('achieve-ov');});
+document.getElementById('mh-tier').addEventListener('click',()=>{_closePanel('modes-ov');renderTierView();_openPanel('tier-ov');});
+// Back buttons for sub-panels (return to modes hub)
+document.getElementById('chest-back').addEventListener('click',()=>{_closePanel('chest-ov');_openPanel('modes-ov');});
+document.getElementById('mission-back').addEventListener('click',()=>{_closePanel('mission-ov');_openPanel('modes-ov');});
+document.getElementById('achieve-back').addEventListener('click',()=>{_closePanel('achieve-ov');_openPanel('modes-ov');});
 document.getElementById('special-back').addEventListener('click',()=>_closePanel('special-ov'));
-document.getElementById('btn-dungeon').addEventListener('click',()=>{_loadDungeonBest();_renderDungeonPanel();_openPanel('dungeon-ov');});
-document.getElementById('dungeon-back').addEventListener('click',()=>_closePanel('dungeon-ov'));
-document.getElementById('btn-inf').addEventListener('click',()=>{_loadInfBest();_renderInfPanel();_openPanel('inf-ov');});
-document.getElementById('inf-back').addEventListener('click',()=>_closePanel('inf-ov'));
-document.getElementById('btn-tier').addEventListener('click',()=>{renderTierView();_openPanel('tier-ov');});
-document.getElementById('tier-back').addEventListener('click',()=>_closePanel('tier-ov'));
+document.getElementById('dungeon-back').addEventListener('click',()=>{_closePanel('dungeon-ov');_openPanel('modes-ov');});
+document.getElementById('inf-back').addEventListener('click',()=>{_closePanel('inf-ov');_openPanel('modes-ov');});
+document.getElementById('tier-back').addEventListener('click',()=>{_closePanel('tier-ov');_openPanel('modes-ov');});
 </script>
 </body>
 </html>
