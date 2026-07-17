@@ -1404,7 +1404,7 @@ function getAudioCtx(){
 function playComboNote(combo){
   try{
     const ctx=getAudioCtx();
-    const idx=Math.min(combo-1,COMBO_MAX_IDX);
+    const idx=(combo-1)%COMBO_NOTES.length;
     const freq=COMBO_NOTES[idx];
     const now=ctx.currentTime;
 
