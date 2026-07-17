@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "3D Escape Game"
+version = "1.0.0"
+id = "artifacts/3d-escape-game"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25371
+
+[services.development]
+run = "pnpm --filter @workspace/3d-escape-game run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/3d-escape-game", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/3d-escape-game/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25371"
+BASE_PATH = "/"
