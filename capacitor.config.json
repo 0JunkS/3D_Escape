@@ -1,0 +1,6 @@
+{
+  "appId": "com.junk.escape3d",
+  "appName": "3D Escape",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
