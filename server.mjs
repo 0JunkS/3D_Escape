@@ -1,5 +1,5 @@
 /**
- * 3D Escape – Multiplayer WebSocket Relay Server
+ * 3D Escape – Multiplayer WebSocket Relay Server + Leaderboard API
  * Deploy this file to Render (Node.js Web Service).
  *
  * Start command : node server.mjs
@@ -11,7 +11,7 @@ import { WebSocketServer, WebSocket } from "ws";
 
 const PORT = Number(process.env.PORT ?? 10000);
 
-// ── Room state ──────────────────────────────────────────────────────────────
+// ── Room state ───────────────────────────────────────────────────────────────
 const rooms = new Map(); // code → { host: WebSocket, guest: WebSocket|null }
 
 function safeSend(ws, data) {
@@ -35,15 +35,134 @@ function cleanupRoom(code, ws) {
   console.log(`[room:${code}] cleaned up — total rooms: ${rooms.size}`);
 }
 
+// ── Leaderboard (in-memory) ──────────────────────────────────────────────────
+// Map: name → { name, pts, type: 'human'|'ai', updatedAt }
+const leaderboard = new Map();
+
+// Seed AI rivals (initial state)
+const AI_RIVALS = [
+  { name: "ArrowMaster", pts: 820 },
+  { name: "QuickEscape",  pts: 710 },
+  { name: "NeonFlight",   pts: 650 },
+  { name: "StarRider",    pts: 580 },
+  { name: "BlazePath",    pts: 490 },
+  { name: "SkyBolt",      pts: 420 },
+  { name: "CrystalRun",   pts: 350 },
+  { name: "SwiftWing",    pts: 260 },
+  { name: "LightStep",    pts: 180 },
+  { name: "NewPlayer",    pts:  80 },
+];
+for (const r of AI_RIVALS) {
+  leaderboard.set(r.name, { name: r.name, pts: r.pts, type: "ai", updatedAt: Date.now() });
+}
+
+// AI score fluctuation every 60 s (simulates ongoing AI battles)
+setInterval(() => {
+  for (const [, entry] of leaderboard) {
+    if (entry.type !== "ai") continue;
+    const won = Math.random() < 0.55;
+    const delta = Math.floor(10 + Math.random() * 20) * (won ? 1 : -1);
+    entry.pts = Math.max(10, Math.min(2000, entry.pts + delta));
+    entry.updatedAt = Date.now();
+  }
+}, 60_000);
+
+/** Returns top-N leaderboard entries sorted by pts descending */
+function getTopLeaderboard(n = 20) {
+  return [...leaderboard.values()]
+    .sort((a, b) => b.pts - a.pts)
+    .slice(0, n);
+}
+
+/** Upsert a player score. type = 'human' | 'ai' */
+function upsertScore(name, pts, type = "human") {
+  if (!name || typeof pts !== "number" || pts < 0) return;
+  const existing = leaderboard.get(name);
+  leaderboard.set(name, {
+    name,
+    pts,           // always update to latest score (not just best)
+    type: existing?.type ?? type,
+    updatedAt: Date.now(),
+  });
+}
+
+// ── CORS helper ──────────────────────────────────────────────────────────────
+function setCORSHeaders(res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+}
+
 // ── HTTP server ──────────────────────────────────────────────────────────────
 const httpServer = createServer((req, res) => {
-  // Health check for Render / monitoring
+  setCORSHeaders(res);
+
+  // Pre-flight
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  const url = new URL(req.url, `http://localhost`);
+
+  // GET /leaderboard → top-20 list
+  if (req.method === "GET" && url.pathname === "/leaderboard") {
+    const top = getTopLeaderboard(20);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: true, data: top }));
+    return;
+  }
+
+  // POST /leaderboard → { name, pts }  (upsert player score)
+  if (req.method === "POST" && url.pathname === "/leaderboard") {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        const { name, pts } = JSON.parse(body);
+        if (!name || typeof pts !== "number") throw new Error("invalid");
+        upsertScore(String(name).slice(0, 20), Math.max(0, Math.round(pts)), "human");
+        const top = getTopLeaderboard(20);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, data: top }));
+      } catch {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: "bad request" }));
+      }
+    });
+    return;
+  }
+
+  // POST /battle → { winner, winnerPts, loser?, loserPts?, winnerType?, loserType? }
+  if (req.method === "POST" && url.pathname === "/battle") {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        const d = JSON.parse(body);
+        if (d.winner && typeof d.winnerPts === "number") {
+          upsertScore(String(d.winner).slice(0, 20), Math.round(d.winnerPts), d.winnerType ?? "human");
+        }
+        if (d.loser && typeof d.loserPts === "number") {
+          upsertScore(String(d.loser).slice(0, 20), Math.round(d.loserPts), d.loserType ?? "human");
+        }
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
+      } catch {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: "bad request" }));
+      }
+    });
+    return;
+  }
+
+  // Health check (default)
   res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ status: "ok", rooms: rooms.size }));
+  res.end(JSON.stringify({ status: "ok", rooms: rooms.size, players: leaderboard.size }));
 });
 
 // ── WebSocket server (noServer = explicit upgrade handling) ──────────────────
-// Using noServer + manual upgrade avoids Render proxy interference.
 const wss = new WebSocketServer({ noServer: true });
 
 httpServer.on("upgrade", (req, socket, head) => {
