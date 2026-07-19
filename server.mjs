@@ -1,5 +1,5 @@
 /**
- * 3D Escape – Multiplayer WebSocket Relay Server + Leaderboard API
+ * 3D Escape – Multiplayer WebSocket Relay Server + Social (DM + Friends) + Leaderboard API
  * Deploy this file to Render (Node.js Web Service).
  *
  * Start command : node server.mjs
@@ -11,35 +11,54 @@ import { WebSocketServer, WebSocket } from "ws";
 
 const PORT = Number(process.env.PORT ?? 10000);
 
-// ── Room state ───────────────────────────────────────────────────────────────
+// ── Game room state ──────────────────────────────────────────────────────────
 const rooms = new Map(); // code → { host: WebSocket, guest: WebSocket|null }
 
 function safeSend(ws, data) {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(data));
-  }
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(data));
 }
-
 function getOpponent(room, ws) {
   if (room.host === ws) return room.guest;
   if (room.guest === ws) return room.host;
   return null;
 }
-
 function cleanupRoom(code, ws) {
   const room = rooms.get(code);
   if (!room) return;
-  const opponent = getOpponent(room, ws);
-  if (opponent) safeSend(opponent, { type: "opponent_disconnected" });
+  const opp = getOpponent(room, ws);
+  if (opp) safeSend(opp, { type: "opponent_disconnected" });
   rooms.delete(code);
-  console.log(`[room:${code}] cleaned up — total rooms: ${rooms.size}`);
+}
+
+// ── Social state ─────────────────────────────────────────────────────────────
+// nickname → WebSocket  (사용자별 상시 연결)
+const users = new Map();
+
+// 대화 키: 두 닉네임 정렬 후 ":"로 연결
+function convKey(a, b) { return [a, b].sort().join(":"); }
+
+// 메시지 히스토리: convKey → [ {from, text, at} ]  (최대 200개)
+const msgHistory = new Map();
+
+// 오프라인 큐: nickname → [ msg ]  (접속 전 받은 메시지/알림)
+const offlineQueue = new Map();
+
+function queueOffline(nickname, msg) {
+  if (!offlineQueue.has(nickname)) offlineQueue.set(nickname, []);
+  const q = offlineQueue.get(nickname);
+  q.push(msg);
+  if (q.length > 100) q.shift(); // 최대 100개
+}
+
+function flushOffline(nickname, ws) {
+  const q = offlineQueue.get(nickname);
+  if (!q || !q.length) return;
+  for (const msg of q) safeSend(ws, msg);
+  offlineQueue.delete(nickname);
 }
 
 // ── Leaderboard (in-memory) ──────────────────────────────────────────────────
-// Map: name → { name, pts, type: 'human'|'ai', updatedAt }
 const leaderboard = new Map();
-
-// Seed AI rivals (initial state)
 const AI_RIVALS = [
   { name: "ArrowMaster", pts: 820 },
   { name: "QuickEscape",  pts: 710 },
@@ -55,150 +74,100 @@ const AI_RIVALS = [
 for (const r of AI_RIVALS) {
   leaderboard.set(r.name, { name: r.name, pts: r.pts, type: "ai", updatedAt: Date.now() });
 }
-
-// AI score fluctuation every 60 s (simulates ongoing AI battles)
 setInterval(() => {
-  for (const [, entry] of leaderboard) {
-    if (entry.type !== "ai") continue;
-    const won = Math.random() < 0.55;
-    const delta = Math.floor(10 + Math.random() * 20) * (won ? 1 : -1);
-    entry.pts = Math.max(10, Math.min(2000, entry.pts + delta));
-    entry.updatedAt = Date.now();
+  for (const [, e] of leaderboard) {
+    if (e.type !== "ai") continue;
+    const d = Math.floor(10 + Math.random() * 20) * (Math.random() < 0.55 ? 1 : -1);
+    e.pts = Math.max(10, Math.min(2000, e.pts + d));
+    e.updatedAt = Date.now();
   }
 }, 60_000);
 
-/** Returns top-N leaderboard entries sorted by pts descending */
 function getTopLeaderboard(n = 20) {
-  return [...leaderboard.values()]
-    .sort((a, b) => b.pts - a.pts)
-    .slice(0, n);
+  return [...leaderboard.values()].sort((a, b) => b.pts - a.pts).slice(0, n);
 }
-
-/** Upsert a player score. type = 'human' | 'ai' */
 function upsertScore(name, pts, type = "human") {
   if (!name || typeof pts !== "number" || pts < 0) return;
-  const existing = leaderboard.get(name);
-  leaderboard.set(name, {
-    name,
-    pts,           // always update to latest score (not just best)
-    type: existing?.type ?? type,
-    updatedAt: Date.now(),
-  });
+  const ex = leaderboard.get(name);
+  leaderboard.set(name, { name, pts, type: ex?.type ?? type, updatedAt: Date.now() });
 }
 
-// ── CORS helper ──────────────────────────────────────────────────────────────
-function setCORSHeaders(res) {
+// ── CORS helper ───────────────────────────────────────────────────────────────
+function setCORS(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
-// ── HTTP server ──────────────────────────────────────────────────────────────
+// ── HTTP server ───────────────────────────────────────────────────────────────
 const httpServer = createServer((req, res) => {
-  setCORSHeaders(res);
+  setCORS(res);
+  if (req.method === "OPTIONS") { res.writeHead(204); res.end(); return; }
+  const url = new URL(req.url, "http://localhost");
 
-  // Pre-flight
-  if (req.method === "OPTIONS") {
-    res.writeHead(204);
-    res.end();
-    return;
-  }
-
-  const url = new URL(req.url, `http://localhost`);
-
-  // GET /leaderboard → top-20 list
   if (req.method === "GET" && url.pathname === "/leaderboard") {
-    const top = getTopLeaderboard(20);
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ ok: true, data: top }));
+    res.end(JSON.stringify({ ok: true, data: getTopLeaderboard() }));
     return;
   }
 
-  // POST /leaderboard → { name, pts }  (upsert player score)
+  function readBody(cb) {
+    let b = "";
+    req.on("data", c => (b += c));
+    req.on("end", () => { try { cb(JSON.parse(b)); } catch { res.writeHead(400); res.end('{"ok":false}'); } });
+  }
+
   if (req.method === "POST" && url.pathname === "/leaderboard") {
-    let body = "";
-    req.on("data", (chunk) => (body += chunk));
-    req.on("end", () => {
-      try {
-        const { name, pts } = JSON.parse(body);
-        if (!name || typeof pts !== "number") throw new Error("invalid");
-        upsertScore(String(name).slice(0, 20), Math.max(0, Math.round(pts)), "human");
-        const top = getTopLeaderboard(20);
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true, data: top }));
-      } catch {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: false, error: "bad request" }));
-      }
+    readBody(({ name, pts }) => {
+      upsertScore(String(name).slice(0, 20), Math.round(pts), "human");
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true, data: getTopLeaderboard() }));
     });
     return;
   }
 
-  // POST /battle → { winner, winnerPts, loser?, loserPts?, winnerType?, loserType? }
   if (req.method === "POST" && url.pathname === "/battle") {
-    let body = "";
-    req.on("data", (chunk) => (body += chunk));
-    req.on("end", () => {
-      try {
-        const d = JSON.parse(body);
-        if (d.winner && typeof d.winnerPts === "number") {
-          upsertScore(String(d.winner).slice(0, 20), Math.round(d.winnerPts), d.winnerType ?? "human");
-        }
-        if (d.loser && typeof d.loserPts === "number") {
-          upsertScore(String(d.loser).slice(0, 20), Math.round(d.loserPts), d.loserType ?? "human");
-        }
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true }));
-      } catch {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: false, error: "bad request" }));
-      }
+    readBody((d) => {
+      if (d.winner) upsertScore(String(d.winner).slice(0,20), Math.round(d.winnerPts||0), d.winnerType||"human");
+      if (d.loser)  upsertScore(String(d.loser).slice(0,20),  Math.round(d.loserPts||0),  d.loserType||"human");
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end('{"ok":true}');
     });
     return;
   }
 
-  // Health check (default)
   res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ status: "ok", rooms: rooms.size, players: leaderboard.size }));
+  res.end(JSON.stringify({ status: "ok", rooms: rooms.size, users: users.size }));
 });
 
-// ── WebSocket server (noServer = explicit upgrade handling) ──────────────────
+// ── WebSocket server ──────────────────────────────────────────────────────────
 const wss = new WebSocketServer({ noServer: true });
-
 httpServer.on("upgrade", (req, socket, head) => {
-  wss.handleUpgrade(req, socket, head, (ws) => {
-    wss.emit("connection", ws, req);
-  });
+  wss.handleUpgrade(req, socket, head, ws => wss.emit("connection", ws, req));
 });
 
-wss.on("connection", (ws, req) => {
-  const ip = req.socket?.remoteAddress ?? "unknown";
-  console.log(`[ws] connected from ${ip}`);
-
-  let assignedCode = null;
+wss.on("connection", (ws) => {
+  let assignedCode = null;   // game room
+  let myNick       = null;   // social nick
 
   ws.on("message", (raw) => {
     let msg;
     try { msg = JSON.parse(raw.toString()); } catch { return; }
     if (!msg?.type) return;
 
-    // ── JOIN ────────────────────────────────────────────────────────────────
+    // ── GAME: join room ──────────────────────────────────────────────────────
     if (msg.type === "join") {
       const code = String(msg.code ?? "").trim();
       if (!code || code.length !== 4) return;
-
       assignedCode = code;
-      const existing = rooms.get(code);
-
-      if (!existing) {
+      const ex = rooms.get(code);
+      if (!ex) {
         rooms.set(code, { host: ws, guest: null });
         safeSend(ws, { type: "joined", role: "host" });
-        console.log(`[room:${code}] created (host) — total: ${rooms.size}`);
-      } else if (!existing.guest) {
-        existing.guest = ws;
+      } else if (!ex.guest) {
+        ex.guest = ws;
         safeSend(ws, { type: "joined", role: "guest" });
-        safeSend(existing.host, { type: "opponent_joined" });
-        console.log(`[room:${code}] guest joined`);
+        safeSend(ex.host, { type: "opponent_joined" });
       } else {
         safeSend(ws, { type: "room_full" });
         assignedCode = null;
@@ -207,32 +176,95 @@ wss.on("connection", (ws, req) => {
       return;
     }
 
-    // ── RELAY to opponent ───────────────────────────────────────────────────
-    if (!assignedCode) return;
-    const room = rooms.get(assignedCode);
-    if (!room) return;
-    const opponent = getOpponent(room, ws);
-    if (opponent) safeSend(opponent, msg);
+    // ── SOCIAL: register nickname ─────────────────────────────────────────────
+    if (msg.type === "register") {
+      const nick = String(msg.nickname || "").trim().slice(0, 20);
+      if (!nick) return;
+      // 같은 닉네임의 기존 연결 해제
+      if (users.has(nick) && users.get(nick) !== ws) {
+        safeSend(users.get(nick), { type: "session_replaced" });
+        users.get(nick).close();
+      }
+      myNick = nick;
+      users.set(nick, ws);
+      safeSend(ws, { type: "registered", nickname: nick });
+      // 오프라인 중 밀린 메시지/알림 전달
+      flushOffline(nick, ws);
+      return;
+    }
+
+    // ── SOCIAL: DM 전송 ───────────────────────────────────────────────────────
+    if (msg.type === "dm") {
+      if (!myNick) return;
+      const to   = String(msg.to  || "").trim();
+      const text = String(msg.text || "").trim().slice(0, 500);
+      if (!to || !text) return;
+      const at = Date.now();
+      // 히스토리 저장 (서버)
+      const key = convKey(myNick, to);
+      if (!msgHistory.has(key)) msgHistory.set(key, []);
+      const hist = msgHistory.get(key);
+      hist.push({ from: myNick, text, at });
+      if (hist.length > 200) hist.shift();
+      // 수신자에게 전달
+      const dm = { type: "dm", from: myNick, text, at };
+      if (users.has(to)) {
+        safeSend(users.get(to), dm);
+      } else {
+        queueOffline(to, dm);   // 오프라인이면 큐에 보관
+      }
+      // 발신자에게 확인 (내 기기에 저장)
+      safeSend(ws, { type: "dm_sent", to, text, at });
+      return;
+    }
+
+    // ── SOCIAL: 히스토리 요청 ─────────────────────────────────────────────────
+    if (msg.type === "dm_history_req") {
+      if (!myNick) return;
+      const with_ = String(msg.with || "").trim();
+      const key   = convKey(myNick, with_);
+      const hist  = msgHistory.get(key) || [];
+      safeSend(ws, { type: "dm_history", with: with_, messages: hist });
+      return;
+    }
+
+    // ── SOCIAL: 친구 요청 (상대방에게 알림 → 자동 상호 추가) ─────────────────
+    if (msg.type === "friend_request") {
+      if (!myNick) return;
+      const to = String(msg.to || "").trim();
+      if (!to) return;
+      const notif = { type: "friend_request_incoming", from: myNick };
+      if (users.has(to)) {
+        safeSend(users.get(to), notif);
+      } else {
+        queueOffline(to, notif);  // 오프라인이면 나중에 전달
+      }
+      return;
+    }
+
+    // ── GAME: relay ───────────────────────────────────────────────────────────
+    if (assignedCode) {
+      const room = rooms.get(assignedCode);
+      if (!room) return;
+      const opp = getOpponent(room, ws);
+      if (opp) safeSend(opp, msg);
+    }
   });
 
   ws.on("close", () => {
-    console.log(`[ws] disconnected (room: ${assignedCode ?? "none"})`);
     if (assignedCode) cleanupRoom(assignedCode, ws);
+    if (myNick && users.get(myNick) === ws) users.delete(myNick);
   });
 
-  ws.on("error", (err) => {
-    console.error(`[ws] error (room: ${assignedCode ?? "none"})`, err.message);
+  ws.on("error", () => {
     if (assignedCode) cleanupRoom(assignedCode, ws);
+    if (myNick && users.get(myNick) === ws) users.delete(myNick);
   });
 });
 
-// Ping every 25s to keep Render connections alive
+// Ping every 25s to keep connections alive
 setInterval(() => {
-  wss.clients.forEach((ws) => {
-    if (ws.readyState === WebSocket.OPEN) ws.ping();
-  });
+  wss.clients.forEach(ws => { if (ws.readyState === WebSocket.OPEN) ws.ping(); });
 }, 25_000);
 
-httpServer.listen(PORT, () => {
-  console.log(`3D Escape relay server running on port ${PORT}`);
-});
+httpServer.listen(PORT, () => console.log(`3D Escape server running on port ${PORT}`));
