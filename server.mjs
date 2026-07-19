@@ -1,5 +1,5 @@
 /**
- * redeploy: 2026-07-19T11:35:58.844Z
+ * redeploy: 2026-07-19T12:00:00.000Z
  * 3D Escape – Multiplayer WebSocket Relay Server + Social (DM + Friends) + Leaderboard API
  * Deploy this file to Render (Node.js Web Service).
  *
@@ -20,8 +20,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, "data");
 if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
 
-const LB_FILE   = join(DATA_DIR, "leaderboard.json");
-const HIST_FILE = join(DATA_DIR, "msghistory.json");
+const LB_FILE    = join(DATA_DIR, "leaderboard.json");
+const HIST_FILE  = join(DATA_DIR, "msghistory.json");
+const QUEUE_FILE = join(DATA_DIR, "offlinequeue.json"); // ← NEW: 오프라인 큐 영속화
 
 function loadJSON(path, fallback) {
   try {
@@ -66,13 +67,26 @@ const _savedHist = loadJSON(HIST_FILE, {});
 const msgHistory = new Map(Object.entries(_savedHist));
 
 // 오프라인 큐: nickname → [ msg ]  (접속 전 받은 메시지/알림)
-const offlineQueue = new Map();
+// ★ 파일에서 복원 → 서버 재시작 후에도 친구 요청/메시지 유지
+const _savedQueue = loadJSON(QUEUE_FILE, {});
+const offlineQueue = new Map(
+  Object.entries(_savedQueue).map(([k, v]) => [k, Array.isArray(v) ? v : []])
+);
+
+function persistOfflineQueue() {
+  const obj = {};
+  for (const [k, v] of offlineQueue) {
+    if (v && v.length > 0) obj[k] = v;
+  }
+  saveJSON(QUEUE_FILE, obj);
+}
 
 function queueOffline(nickname, msg) {
   if (!offlineQueue.has(nickname)) offlineQueue.set(nickname, []);
   const q = offlineQueue.get(nickname);
   q.push(msg);
   if (q.length > 100) q.shift(); // 최대 100개
+  persistOfflineQueue(); // ★ 즉시 파일에 저장
 }
 
 function flushOffline(nickname, ws) {
@@ -80,6 +94,7 @@ function flushOffline(nickname, ws) {
   if (!q || !q.length) return;
   for (const msg of q) safeSend(ws, msg);
   offlineQueue.delete(nickname);
+  persistOfflineQueue(); // ★ 전달 후 파일 갱신
 }
 
 // 메시지 히스토리 파일 저장
@@ -243,7 +258,7 @@ wss.on("connection", (ws) => {
       myNick = nick;
       users.set(nick, ws);
       safeSend(ws, { type: "registered", nickname: nick });
-      // 오프라인 중 밀린 메시지/알림 전달
+      // 오프라인 중 밀린 메시지/알림 전달 (파일에서 복원된 큐 포함)
       flushOffline(nick, ws);
       return;
     }
@@ -267,7 +282,7 @@ wss.on("connection", (ws) => {
       if (users.has(to)) {
         safeSend(users.get(to), dm);
       } else {
-        queueOffline(to, dm);   // 오프라인이면 큐에 보관
+        queueOffline(to, dm);   // ★ 오프라인이면 파일 영속 큐에 보관
       }
       // 발신자에게 확인 (내 기기에 저장)
       safeSend(ws, { type: "dm_sent", to, text, at });
@@ -289,11 +304,20 @@ wss.on("connection", (ws) => {
       if (!myNick) return;
       const to = String(msg.to || "").trim();
       if (!to) return;
+
+      // ★ 중복 친구 요청 방지: 큐에 이미 있으면 다시 넣지 않음
       const notif = { type: "friend_request_incoming", from: myNick };
       if (users.has(to)) {
         safeSend(users.get(to), notif);
       } else {
-        queueOffline(to, notif);  // 오프라인이면 나중에 전달
+        // 오프라인 큐 중복 확인
+        const existing = offlineQueue.get(to) || [];
+        const alreadyQueued = existing.some(
+          q => q.type === "friend_request_incoming" && q.from === myNick
+        );
+        if (!alreadyQueued) {
+          queueOffline(to, notif); // ★ 파일 영속 큐에 보관
+        }
       }
       return;
     }
@@ -307,7 +331,7 @@ wss.on("connection", (ws) => {
       if (users.has(to)) {
         safeSend(users.get(to), notif);
       } else {
-        queueOffline(to, notif);  // 오프라인이면 나중에 전달
+        queueOffline(to, notif); // ★ 파일 영속 큐에 보관
       }
       return;
     }
