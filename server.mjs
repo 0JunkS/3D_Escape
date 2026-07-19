@@ -8,8 +8,30 @@
 
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
 const PORT = Number(process.env.PORT ?? 10000);
+
+// ── Data persistence helpers ──────────────────────────────────────────────────
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const DATA_DIR = join(__dirname, "data");
+if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
+
+const LB_FILE   = join(DATA_DIR, "leaderboard.json");
+const HIST_FILE = join(DATA_DIR, "msghistory.json");
+
+function loadJSON(path, fallback) {
+  try {
+    if (existsSync(path)) return JSON.parse(readFileSync(path, "utf8"));
+  } catch {}
+  return fallback;
+}
+
+function saveJSON(path, data) {
+  try { writeFileSync(path, JSON.stringify(data), "utf8"); } catch {}
+}
 
 // ── Game room state ──────────────────────────────────────────────────────────
 const rooms = new Map(); // code → { host: WebSocket, guest: WebSocket|null }
@@ -38,7 +60,9 @@ const users = new Map();
 function convKey(a, b) { return [a, b].sort().join(":"); }
 
 // 메시지 히스토리: convKey → [ {from, text, at} ]  (최대 200개)
-const msgHistory = new Map();
+// 파일에서 복원
+const _savedHist = loadJSON(HIST_FILE, {});
+const msgHistory = new Map(Object.entries(_savedHist));
 
 // 오프라인 큐: nickname → [ msg ]  (접속 전 받은 메시지/알림)
 const offlineQueue = new Map();
@@ -57,7 +81,14 @@ function flushOffline(nickname, ws) {
   offlineQueue.delete(nickname);
 }
 
-// ── Leaderboard (in-memory) ──────────────────────────────────────────────────
+// 메시지 히스토리 파일 저장
+function persistMsgHistory() {
+  const obj = {};
+  for (const [k, v] of msgHistory) obj[k] = v;
+  saveJSON(HIST_FILE, obj);
+}
+
+// ── Leaderboard (파일 영속) ──────────────────────────────────────────────────
 const leaderboard = new Map();
 const AI_RIVALS = [
   { name: "ArrowMaster", pts: 820 },
@@ -71,9 +102,17 @@ const AI_RIVALS = [
   { name: "LightStep",    pts: 180 },
   { name: "NewPlayer",    pts:  80 },
 ];
+
+// AI 라이벌 먼저 등록
 for (const r of AI_RIVALS) {
   leaderboard.set(r.name, { name: r.name, pts: r.pts, type: "ai", updatedAt: Date.now() });
 }
+// 저장된 데이터로 덮어쓰기 (사람 점수 복원)
+const _savedLb = loadJSON(LB_FILE, []);
+for (const e of _savedLb) {
+  leaderboard.set(e.name, e);
+}
+
 setInterval(() => {
   for (const [, e] of leaderboard) {
     if (e.type !== "ai") continue;
@@ -81,6 +120,7 @@ setInterval(() => {
     e.pts = Math.max(10, Math.min(2000, e.pts + d));
     e.updatedAt = Date.now();
   }
+  persistLeaderboard(); // AI 변동도 주기적으로 저장
 }, 60_000);
 
 function getTopLeaderboard(n = 20) {
@@ -90,7 +130,14 @@ function upsertScore(name, pts, type = "human") {
   if (!name || typeof pts !== "number" || pts < 0) return;
   const ex = leaderboard.get(name);
   leaderboard.set(name, { name, pts, type: ex?.type ?? type, updatedAt: Date.now() });
+  persistLeaderboard();
 }
+function persistLeaderboard() {
+  saveJSON(LB_FILE, [...leaderboard.values()]);
+}
+
+// 30초마다 히스토리도 저장 (혹시 놓친 경우 대비)
+setInterval(persistMsgHistory, 30_000);
 
 // ── CORS helper ───────────────────────────────────────────────────────────────
 function setCORS(res) {
@@ -133,6 +180,13 @@ const httpServer = createServer((req, res) => {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end('{"ok":true}');
     });
+    return;
+  }
+
+  // 헬스 체크 (서버를 깨우기 위한 핑용)
+  if (req.method === "GET" && url.pathname === "/ping") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: true, ts: Date.now() }));
     return;
   }
 
@@ -206,6 +260,7 @@ wss.on("connection", (ws) => {
       const hist = msgHistory.get(key);
       hist.push({ from: myNick, text, at });
       if (hist.length > 200) hist.shift();
+      persistMsgHistory();
       // 수신자에게 전달
       const dm = { type: "dm", from: myNick, text, at };
       if (users.has(to)) {
@@ -234,6 +289,20 @@ wss.on("connection", (ws) => {
       const to = String(msg.to || "").trim();
       if (!to) return;
       const notif = { type: "friend_request_incoming", from: myNick };
+      if (users.has(to)) {
+        safeSend(users.get(to), notif);
+      } else {
+        queueOffline(to, notif);  // 오프라인이면 나중에 전달
+      }
+      return;
+    }
+
+    // ── SOCIAL: 친구 삭제 알림 ────────────────────────────────────────────────
+    if (msg.type === "friend_delete") {
+      if (!myNick) return;
+      const to = String(msg.to || "").trim();
+      if (!to) return;
+      const notif = { type: "friend_deleted_by", from: myNick };
       if (users.has(to)) {
         safeSend(users.get(to), notif);
       } else {
