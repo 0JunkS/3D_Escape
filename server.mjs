@@ -205,7 +205,7 @@ const httpServer = createServer((req, res) => {
     readBody(({ name, pts }) => {
       upsertScore(String(name).slice(0, 20), Math.round(pts), "human");
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true, data: getTopLeaderboard() }));
+      res.end(JSON.stringify({ ok: true, data: getFullLeaderboard() }));
     });
     return;
   }
