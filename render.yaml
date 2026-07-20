@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: threedgame
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: node server.mjs
+    envVars:
+      - key: NODE_ENV
+        value: production
+    disk:
+      name: data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1

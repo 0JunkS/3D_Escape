@@ -2,7 +2,9 @@
   "name": "3d-escape",
   "version": "1.0.0",
   "description": "3D Escape Game",
+  "type": "module",
   "scripts": {
+    "start": "node server.mjs",
     "build": "echo 'No build step needed'"
   },
   "dependencies": {
@@ -12,5 +14,8 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^6.0.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
