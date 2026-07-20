@@ -22,7 +22,8 @@ if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
 
 const LB_FILE    = join(DATA_DIR, "leaderboard.json");
 const HIST_FILE  = join(DATA_DIR, "msghistory.json");
-const QUEUE_FILE = join(DATA_DIR, "offlinequeue.json"); // ← NEW: 오프라인 큐 영속화
+const QUEUE_FILE = join(DATA_DIR, "offlinequeue.json");
+const USERS_FILE = join(DATA_DIR, "users.json"); // 가입한 유저 닉네임 목록
 
 function loadJSON(path, fallback) {
   try {
@@ -33,6 +34,17 @@ function loadJSON(path, fallback) {
 
 function saveJSON(path, data) {
   try { writeFileSync(path, JSON.stringify(data), "utf8"); } catch {}
+}
+
+// ── Known users (가입 이력이 있는 닉네임) ────────────────────────────────────
+const _savedUsers = loadJSON(USERS_FILE, []);
+const knownUsers = new Set(Array.isArray(_savedUsers) ? _savedUsers : []);
+
+function registerKnownUser(nick) {
+  if (!knownUsers.has(nick)) {
+    knownUsers.add(nick);
+    saveJSON(USERS_FILE, [...knownUsers]);
+  }
 }
 
 // ── Game room state ──────────────────────────────────────────────────────────
@@ -199,6 +211,15 @@ const httpServer = createServer((req, res) => {
     return;
   }
 
+  // 유저 존재 여부 확인 (친구 추가 전 검증용)
+  if (req.method === "GET" && url.pathname === "/user-exists") {
+    const nick = (url.searchParams.get("nickname") || "").trim();
+    const exists = nick.length > 0 && knownUsers.has(nick);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: true, exists }));
+    return;
+  }
+
   // 헬스 체크 (서버를 깨우기 위한 핑용)
   if (req.method === "GET" && url.pathname === "/ping") {
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -257,6 +278,7 @@ wss.on("connection", (ws) => {
       }
       myNick = nick;
       users.set(nick, ws);
+      registerKnownUser(nick); // 가입 이력 기록
       safeSend(ws, { type: "registered", nickname: nick });
       // 오프라인 중 밀린 메시지/알림 전달 (파일에서 복원된 큐 포함)
       flushOffline(nick, ws);
