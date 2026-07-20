@@ -38,7 +38,8 @@ function saveJSON(path, data) {
 
 // ── Known users (가입 이력이 있는 닉네임) ────────────────────────────────────
 const _savedUsers = loadJSON(USERS_FILE, []);
-const knownUsers = new Set(Array.isArray(_savedUsers) ? _savedUsers : []);
+const SEED_USERS = ["Sedon", "GaNaDi"];
+const knownUsers = new Set([...SEED_USERS, ...(Array.isArray(_savedUsers) ? _savedUsers : [])]);
 
 function registerKnownUser(nick) {
   if (!knownUsers.has(nick)) {
