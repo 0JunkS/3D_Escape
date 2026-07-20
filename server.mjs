@@ -152,8 +152,16 @@ setInterval(() => {
   persistLeaderboard(); // AI 변동도 주기적으로 저장
 }, 60_000);
 
-function getTopLeaderboard(n = 20) {
-  return [...leaderboard.values()].sort((a, b) => b.pts - a.pts).slice(0, n);
+function getFullLeaderboard() {
+  // knownUsers에 등록된 닉네임은 점수 없어도 포함 (0점)
+  const result = new Map([...leaderboard]);
+  for (const nick of knownUsers) {
+    if (!result.has(nick)) {
+      result.set(nick, { name: nick, pts: 0, type: "human", updatedAt: Date.now() });
+    }
+  }
+  const sorted = [...result.values()].sort((a, b) => b.pts - a.pts);
+  return sorted.map((e, i) => ({ ...e, rank: i + 1 }));
 }
 function upsertScore(name, pts, type = "human") {
   if (!name || typeof pts !== "number" || pts < 0) return;
@@ -183,7 +191,7 @@ const httpServer = createServer((req, res) => {
 
   if (req.method === "GET" && url.pathname === "/leaderboard") {
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ ok: true, data: getTopLeaderboard() }));
+    res.end(JSON.stringify({ ok: true, data: getFullLeaderboard() }));
     return;
   }
 
