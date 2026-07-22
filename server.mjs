@@ -367,6 +367,35 @@ wss.on("connection", (ws) => {
       return;
     }
 
+    
+    // ── PLAZA: global chat broadcast ────────────────────────────────────────────
+    if (msg.type === "plaza_chat") {
+      if (!myNick) return;
+      const text = String(msg.text || "").trim().slice(0, 150);
+      if (!text) return;
+      const bcast = { type: "plaza_chat", from: myNick, text, at: Date.now() };
+      for (const [, uw] of users) { if(uw.readyState===WebSocket.OPEN) safeSend(uw,bcast); }
+      return;
+    }
+    // ── PLAZA: position sync ───────────────────────────────────────────────────
+    if (msg.type === "plaza_pos") {
+      if (!myNick) return;
+      const bcast = { type:"plaza_pos", from:myNick, x:msg.x, y:msg.y, d:msg.d, skin:msg.skin };
+      for (const [nick, uw] of users) {
+        if(nick!==myNick && uw.readyState===WebSocket.OPEN) safeSend(uw,bcast);
+      }
+      return;
+    }
+    // ── PLAZA: join / leave ────────────────────────────────────────────────────
+    if (msg.type === "plaza_join" || msg.type === "plaza_leave") {
+      if (!myNick) return;
+      const bcast = { type:msg.type, from:myNick };
+      for (const [nick, uw] of users) {
+        if(nick!==myNick && uw.readyState===WebSocket.OPEN) safeSend(uw,bcast);
+      }
+      return;
+    }
+
     // ── GAME: relay ───────────────────────────────────────────────────────────
     if (assignedCode) {
       const room = rooms.get(assignedCode);
