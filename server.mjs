@@ -1,5 +1,5 @@
 /**
- * redeploy: 2026-07-23T12:00:00.000Z
+ * redeploy: 2026-07-23T14:00:00.000Z
  * 3D Escape – Multiplayer WebSocket Relay Server + Social (DM + Friends) + Leaderboard API
  * Deploy this file to Render (Node.js Web Service).
  *
@@ -9,8 +9,8 @@
 
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
-import { join, dirname } from "path";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, createReadStream, statSync } from "fs";
+import { join, dirname, extname } from "path";
 import { fileURLToPath } from "url";
 
 const PORT = Number(process.env.PORT ?? 10000);
@@ -227,6 +227,44 @@ function setCORS(res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
+// ── Static file helpers ───────────────────────────────────────────────────────
+const MIME = {
+  ".html": "text/html; charset=utf-8",
+  ".js":   "application/javascript",
+  ".css":  "text/css",
+  ".mp3":  "audio/mpeg",
+  ".png":  "image/png",
+  ".jpg":  "image/jpeg",
+  ".svg":  "image/svg+xml",
+  ".json": "application/json",
+  ".woff2":"font/woff2",
+};
+
+function serveStatic(req, res) {
+  // Only serve GET requests for non-API paths
+  const url = new URL(req.url, "http://localhost");
+  const pathname = url.pathname;
+
+  // Map "/" → index.html
+  let filePath = pathname === "/" ? join(__dirname, "index.html")
+                                  : join(__dirname, pathname.slice(1));
+
+  // Safety: don't escape project root
+  if (!filePath.startsWith(__dirname)) { res.writeHead(403); res.end(); return; }
+
+  try {
+    const stat = statSync(filePath);
+    if (!stat.isFile()) throw new Error("not a file");
+    const ext = extname(filePath).toLowerCase();
+    const mime = MIME[ext] || "application/octet-stream";
+    res.writeHead(200, { "Content-Type": mime });
+    createReadStream(filePath).pipe(res);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // ── HTTP server ───────────────────────────────────────────────────────────────
 const httpServer = createServer((req, res) => {
   setCORS(res);
@@ -296,6 +334,9 @@ const httpServer = createServer((req, res) => {
     res.end(JSON.stringify({ ok: true, ts: Date.now() }));
     return;
   }
+
+  // Static file fallback (index.html, plaza_bgm.mp3, assets, etc.)
+  if (req.method === "GET" && serveStatic(req, res)) return;
 
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify({ status: "ok", rooms: rooms.size, users: users.size }));
