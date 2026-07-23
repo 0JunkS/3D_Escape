@@ -1,5 +1,5 @@
 /**
- * redeploy: 2026-07-19T12:00:00.000Z
+ * redeploy: 2026-07-23T12:00:00.000Z
  * 3D Escape – Multiplayer WebSocket Relay Server + Social (DM + Friends) + Leaderboard API
  * Deploy this file to Render (Node.js Web Service).
  *
@@ -24,6 +24,7 @@ const LB_FILE    = join(DATA_DIR, "leaderboard.json");
 const HIST_FILE  = join(DATA_DIR, "msghistory.json");
 const QUEUE_FILE = join(DATA_DIR, "offlinequeue.json");
 const USERS_FILE = join(DATA_DIR, "users.json"); // 가입한 유저 닉네임 목록
+const RUNNER_LB_FILE = join(DATA_DIR, "runner_leaderboard.json"); // 달리기 리더보드
 
 function loadJSON(path, fallback) {
   try {
@@ -176,6 +177,49 @@ function persistLeaderboard() {
 // 30초마다 히스토리도 저장 (혹시 놓친 경우 대비)
 setInterval(persistMsgHistory, 30_000);
 
+// ── Runner Leaderboard (달리기 최고 기록) ─────────────────────────────────────
+const AI_RUNNER_RIVALS = [
+  { name: "SpeedKing",  dist: 2800 },
+  { name: "BlazePath",  dist: 2350 },
+  { name: "SwiftRun",   dist: 1900 },
+  { name: "AeroFly",    dist: 1550 },
+  { name: "RocketStep", dist: 1200 },
+  { name: "DashBolt",   dist:  880 },
+  { name: "SkyWalker",  dist:  620 },
+  { name: "NewRunner",  dist:  350 },
+];
+const runnerLeaderboard = new Map();
+for (const r of AI_RUNNER_RIVALS) {
+  runnerLeaderboard.set(r.name, { name: r.name, dist: r.dist, type: "ai", updatedAt: Date.now() });
+}
+const _savedRunnerLb = loadJSON(RUNNER_LB_FILE, []);
+for (const e of _savedRunnerLb) {
+  runnerLeaderboard.set(e.name, e);
+}
+// Slight random drift for AI rivals
+setInterval(() => {
+  for (const [, e] of runnerLeaderboard) {
+    if (e.type !== "ai") continue;
+    const d = Math.floor(5 + Math.random() * 30) * (Math.random() < 0.4 ? 1 : -1);
+    e.dist = Math.max(100, Math.min(5000, e.dist + d));
+    e.updatedAt = Date.now();
+  }
+  saveJSON(RUNNER_LB_FILE, [...runnerLeaderboard.values()]);
+}, 120_000);
+
+function getRunnerLeaderboard() {
+  const sorted = [...runnerLeaderboard.values()].sort((a, b) => b.dist - a.dist);
+  return sorted.map((e, i) => ({ ...e, rank: i + 1 }));
+}
+function upsertRunnerScore(name, dist) {
+  if (!name || typeof dist !== "number" || dist < 0) return;
+  const ex = runnerLeaderboard.get(name);
+  // 최고 기록만 갱신
+  if (ex && ex.dist >= dist) { return; }
+  runnerLeaderboard.set(name, { name, dist, type: "human", updatedAt: Date.now() });
+  saveJSON(RUNNER_LB_FILE, [...runnerLeaderboard.values()]);
+}
+
 // ── CORS helper ───────────────────────────────────────────────────────────────
 function setCORS(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -216,6 +260,23 @@ const httpServer = createServer((req, res) => {
       if (d.loser)  upsertScore(String(d.loser).slice(0,20),  Math.round(d.loserPts||0),  d.loserType||"human");
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end('{"ok":true}');
+    });
+    return;
+  }
+
+  // 달리기 리더보드 GET
+  if (req.method === "GET" && url.pathname === "/runner-leaderboard") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: true, data: getRunnerLeaderboard() }));
+    return;
+  }
+
+  // 달리기 리더보드 POST (기록 등록)
+  if (req.method === "POST" && url.pathname === "/runner-leaderboard") {
+    readBody(({ name, dist }) => {
+      upsertRunnerScore(String(name || "익명").slice(0, 20), Math.round(Number(dist) || 0));
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true, data: getRunnerLeaderboard() }));
     });
     return;
   }
